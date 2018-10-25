@@ -25,7 +25,7 @@ class PacketAssemblerIO extends Bundle {
 
 
 class PacketAssembler extends Module {
-    val io = IO(PacketAssemblerIO)
+    val io = IO(new PacketAssemblerIO)
 
 	//state parameter
 	val idle :: preamble :: aa :: pdu_header :: pdu_payload :: crc :: Nil = Enum(6)
@@ -272,14 +272,14 @@ class PacketAssembler extends Module {
 
 
 	//Instantiate CRC Module
-	val crc = Module(new Serial_CRC)
+	val serial_crc = Module(new Serial_CRC)
 
-	crc.io.init := crc_reset
-	crc.io.operand.bits := crc_data
-	crc.io.operand.valid := crc_valid
-	crc_result := crc.io.result.bits
-	crc.io.result.ready := true.B
-	crc.io.seed := crc_seed
+	serial_crc.io.init := crc_reset
+	serial_crc.io.operand.bits := crc_data
+	serial_crc.io.operand.valid := crc_valid
+	crc_result := serial_crc.io.result.bits
+	serial_crc.io.result.ready := true.B
+	serial_crc.io.seed := crc_seed
 
 	//Instantiate Whitening Module
 	val white = Module(new Whitening)
