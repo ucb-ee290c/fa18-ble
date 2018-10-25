@@ -5,13 +5,11 @@ import chisel3.util._
 
 
 class Serial_CRC extends Module {
-    val io      = IO(new Bundle {
-    val operand  = new DecoupledIO(UInt(1.W)).flip()
-    val result   = new DecoupledIO(UInt(24.W))
-
-   	val seed       = Input(UInt(24.W))
-    val init       = Input(Bool())        // to init the seed
-
+    val io = IO(new Bundle {
+        val operand  = Flipped(Decoupled(UInt(1.W)))
+        val result   = Decoupled(UInt(24.W))
+   	    val seed     = Input(UInt(24.W))
+        val init     = Input(Bool())        // to init the seed
   })
 
     val lfsr = Reg(init = 0.U(24.W)) // x^24 + x^10 + x^9 + x^6 + x^4 + x^3 + x^1 + 1

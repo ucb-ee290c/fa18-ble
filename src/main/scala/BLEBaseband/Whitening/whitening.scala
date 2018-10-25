@@ -5,12 +5,11 @@ import chisel3.util._
 
 
 class Whitening extends Module {
-    val io      = IO(new Bundle {
-    val operand  = new DecoupledIO(UInt(1.W)).flip()
-    val result   = new DecoupledIO(UInt(1.W))
-
-    val seed       = Input(UInt(7.W))
-    val init       = Input(Bool())        // to init the seed
+    val io = IO(new Bundle {
+        val operand  = Flipped(DecoupledIO(UInt(1.W)))
+        val result   = Decoupled(UInt(1.W))
+        val seed     = Input(UInt(7.W))
+        val init     = Input(Bool())        // to init the seed
   })
 
     val whitening_lfsr = Reg(init = 0.U(7.W)) // 1+x^4+x^7;
