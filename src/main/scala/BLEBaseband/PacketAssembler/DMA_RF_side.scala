@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.withClock
 
-// Chen Fu: DMA RF controller side implementaion
+// DMA RF controller side implementation
 class DMA_RF extends Module {
   val io = IO(new Bundle {
 
@@ -44,12 +44,10 @@ class DMA_RF extends Module {
 
 // data FIFO
 val txfifo = Module(new Queue(UInt(8.W), 64))
-txfifo.io.enq <> io.tl_tx_data
-txfifo.io.deq <> io.pa_tx_data
+
 
 val rxfifo = Module(new Queue(UInt(8.W), 32))
-rxfifo.io.enq <> io.pa_rx_data
-rxfifo.io.deq <> io.tl_rx_data
+
 
 io.pa_tx_length <> io.tl_tx_length
 
@@ -57,14 +55,13 @@ io.pa_rx_length <> io.tl_rx_length
 io.tl_rx_length.bits := io.pa_rx_length.bits + 4.U + 2.U + 3.U // Access Address and PDU Header
 
 io.pa_rx_FlagCRC <> io.tl_rx_FlagCRC
-
 io.pa_rx_FlagAA <> io.tl_rx_FlagAA
 
 io.pa_tx_trigger := io.tl_tx_trigger
 io.tl_rx_trigger := io.pa_rx_trigger
 
 // FSM
-val s_Idle :: s_Txdata :: s_Txdone :: s_Rxdata :: Nil = Enum(4)
+val s_Idle :: s_Txdata :: s_Rxdata :: Nil = Enum(3)
 val state = Reg(init = s_Idle)
 
 	switch(state)
@@ -80,24 +77,29 @@ val state = Reg(init = s_Idle)
 				state := s_Rxdata
 			}
 		}
-		is (s_Txdata) // start reading data from FIFO and send to RFController
+
+		is (s_Txdata) // start reading data from TL to fifo and then to PA
 		{
+			txfifo.io.enq <> io.tl_tx_data	// TL to fifo
+			txfifo.io.deq <> io.pa_tx_data	// fifo to PA
 			when (io.pa_tx_done)
 			{
-				state := s_Txdone
-			}
-		}
-		is (s_Txdone) // start reading data from FIFO and send to RFController
-		{
-			state := s_Idle
-		}
-		is (s_Rxdata) // start writing data to FIFO from RFController
-		{
-			when (io.pa_rx_done)
-			{
+				io.tl_tx_done := true.B
 				state := s_Idle
 			}
 		}
+
+		is (s_Rxdata) // start writing data from PDA to fifo and then to TL
+		{
+			rxfifo.io.enq <> io.pa_rx_data	// PDA to fifo
+			rxfifo.io.deq <> io.tl_rx_data	// fifo to TL
+			when (io.pa_rx_done)
+			{
+				io.pa_rx_done := true.B
+				state := s_Idle
+			}
+		}
+
 	}
-	io.tl_tx_done := (state === s_Txdone)
+
 }
