@@ -48,55 +48,55 @@ val txfifo = Module(new Queue(UInt(8.W), 64))
 
 val rxfifo = Module(new Queue(UInt(8.W), 32))
 
-
-io.pa_tx_length <> io.tl_tx_length
-
-io.pa_rx_length <> io.tl_rx_length
-io.tl_rx_length.bits := io.pa_rx_length.bits + 4.U + 2.U + 3.U // Access Address and PDU Header
-
-io.pa_rx_FlagCRC <> io.tl_rx_FlagCRC
-io.pa_rx_FlagAA <> io.tl_rx_FlagAA
-
-io.pa_tx_trigger := io.tl_tx_trigger
-io.tl_rx_trigger := io.pa_rx_trigger
-
 // FSM
-val s_Idle :: s_Txdata :: s_Rxdata :: Nil = Enum(3)
-val state = Reg(init = s_Idle)
+val s_idle :: s_txdata :: s_rxdata :: Nil = Enum(3)
+	val state = RegInit(s_idle)
 
 	switch(state)
 	{
-		is (s_Idle)
+		is (s_idle)
 		{
 			when (io.tl_tx_trigger)
 			{
-				state := s_Txdata
+				state := s_txdata
 			}
 			.elsewhen (io.pa_rx_trigger)
 			{
-				state := s_Rxdata
+				state := s_rxdata
 			}
 		}
 
-		is (s_Txdata) // start reading data from TL to fifo and then to PA
+		is (s_txdata) // start reading data from TL to fifo and then to PA
 		{
-			txfifo.io.enq <> io.tl_tx_data	// TL to fifo
-			txfifo.io.deq <> io.pa_tx_data	// fifo to PA
+			txfifo.io.enq := io.tl_tx_data	// TL to fifo
+			txfifo.io.deq := io.pa_tx_data	// fifo to PA
+
+			io.pa_tx_trigger := io.tl_tx_trigger
+			io.pa_tx_length := io.tl_tx_length
+
+
 			when (io.pa_tx_done)
 			{
 				io.tl_tx_done := true.B
-				state := s_Idle
+				state := s_idle
 			}
 		}
 
-		is (s_Rxdata) // start writing data from PDA to fifo and then to TL
+		is (s_rxdata) // start writing data from PDA to fifo and then to TL
 		{
-			rxfifo.io.enq <> io.pa_rx_data	// PDA to fifo
-			rxfifo.io.deq <> io.tl_rx_data	// fifo to TL
-			when (io.pa_rx_done)
+			rxfifo.io.enq := io.pa_rx_data	// PDA to fifo
+			rxfifo.io.deq := io.tl_rx_data	// fifo to TL
+
+			io.tl_rx_trigger := io.pa_rx_trigger
+			io.pa_rx_FlagCRC := io.tl_rx_FlagCRC
+			io.pa_rx_FlagAA := io.tl_rx_FlagAA
+			io.pa_rx_length := io.tl_rx_length
+			io.tl_rx_length.bits := io.pa_rx_length.bits + 4.U + 2.U + 3.U // Access Address and PDU Header
+
+			when (io.tl_rx_done)
 			{
 				io.pa_rx_done := true.B
-				state := s_Idle
+				state := s_idle
 			}
 		}
 
