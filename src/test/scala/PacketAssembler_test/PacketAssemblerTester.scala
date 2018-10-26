@@ -8,15 +8,15 @@ import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
 
 class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //IO reference
-    /*val DMA_Trigger_i = Input(Bool())
-    val DMA_Data_i = Flipped(Decoupled(UInt(8.W)))//decouple(sink): data, pop, empty
+    /*val in.trigger = Input(Bool())
+    val in.data = Flipped(Decoupled(UInt(8.W)))//decouple(sink): data, pop, empty
     val REG_CRC_Seed_i = Input(UInt(24.W))
     val REG_White_Seed_i = Input(UInt(7.W))
 
-    val DMA_Done_o = Output(Bool())	
+    val in.done_o = Output(Bool())	
 	
     //AFIFO
-    val AFIFO_Data_o = Decoupled(UInt(1.W))//decouple(source): data, puch, full*/
+    val out = Decoupled(UInt(1.W))//decouple(source): data, puch, full*/
 
 //scala declaration
 	/*
@@ -44,92 +44,92 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 	//reset(3)
 
 //throughout packet
-	poke(c.io.REG_CRC_Seed_i,"b010101010101010101010101".U)
-	poke(c.io.REG_White_Seed_i,"b1100101".U)
+	poke(c.io.in.crc_seed,"b010101010101010101010101".U)
+	poke(c.io.in.white_seed,"b1100101".U)
 
 //initialize
-	poke(c.io.DMA_Trigger_i,false.B)
-	poke(c.io.DMA_Data_i.valid,false.B)
-	poke(c.io.DMA_Data_i.bits,0.U)
-	poke(c.io.AFIFO_Data_o.ready,false.B)
+	poke(c.io.in.trigger,false.B)
+	poke(c.io.in.data.valid,false.B)
+	poke(c.io.in.data.bits,0.U)
+	poke(c.io.out.ready,false.B)
 
 	step(2)
 
 //trigger
-	poke(c.io.DMA_Trigger_i,true.B)
-	poke(c.io.DMA_Data_i.valid,true.B)
-	poke(c.io.DMA_Data_i.bits,wholepacket_dig_rev(7,0))
+	poke(c.io.in.trigger,true.B)
+	poke(c.io.in.data.valid,true.B)
+	poke(c.io.in.data.bits,wholepacket_dig_rev(7,0))
 
 	step(1)
-	poke(c.io.DMA_Trigger_i,false.B)
+	poke(c.io.in.trigger,false.B)
 
 //PREAMBLE
 	var j:Int = 0
 	for(j<-0 to 7){
 		//step(Random_Num(1,100))
 		step(5)
-		poke(c.io.AFIFO_Data_o.ready,true.B)
-   		expect(c.io.AFIFO_Data_o.bits, preamble_rev(j))//note: U to B
-   		//println(s"${peek(c.io.AFIFO_Data_o.bits)}")
+		poke(c.io.out.ready,true.B)
+   		expect(c.io.out.bits, preamble_rev(j))//note: U to B
+   		//println(s"${peek(c.io.out.bits)}")
    		//println(s"${peek(preamble_rev(j))}")
    		step(1)
- 		poke(c.io.AFIFO_Data_o.ready,false.B)//need to test two ready  				
+ 		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
 	//step(Random_Num(8,100))
 	step(10)
 //AA
 	for(j<-0 to 31){
 		if(j%8==0){
-			poke(c.io.DMA_Data_i.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.DMA_Data_i.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.DMA_Data_i.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		//println(s"${(j/8)*8}")
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
-		poke(c.io.AFIFO_Data_o.ready,true.B)
-   		expect(c.io.AFIFO_Data_o.bits, wholepacket_rad_rev(j))//note
-   		//println(s"j="+j+s"\n${peek(c.io.AFIFO_Data_o.bits)}\t${peek(wholepacket_rad_rev(j))}")
+		poke(c.io.out.ready,true.B)
+   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
+   		//println(s"j="+j+s"\n${peek(c.io.out.bits)}\t${peek(wholepacket_rad_rev(j))}")
    		step(1)
- 		poke(c.io.AFIFO_Data_o.ready,false.B)//need to test two ready  				
+ 		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
 	//step(Random_Num(8,100))
 	step(10)
 //PDU_HEADER
 	for(j<-32 to 47){
 		if(j%8==0){
-			poke(c.io.DMA_Data_i.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.DMA_Data_i.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.DMA_Data_i.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
-		poke(c.io.AFIFO_Data_o.ready,true.B)
-   		//println(s"j="+j+s"\n${peek(c.io.AFIFO_Data_o.bits)}\t${peek(wholepacket_rad_rev(j))}")		
-   		expect(c.io.AFIFO_Data_o.bits, wholepacket_rad_rev(j))//note
+		poke(c.io.out.ready,true.B)
+   		//println(s"j="+j+s"\n${peek(c.io.out.bits)}\t${peek(wholepacket_rad_rev(j))}")		
+   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
    		step(1)
- 		poke(c.io.AFIFO_Data_o.ready,false.B)//need to test two ready  				
+ 		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
 	//step(Random_Num(8,100))
 	step(10)
 //PDU_PAYLOAD
 	for(j<-48 to 22*8-1){
 		if(j%8==0){
-			poke(c.io.DMA_Data_i.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.DMA_Data_i.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.DMA_Data_i.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
-		poke(c.io.AFIFO_Data_o.ready,true.B)
-   		expect(c.io.AFIFO_Data_o.bits, wholepacket_rad_rev(j))//note
+		poke(c.io.out.ready,true.B)
+   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
 
    		step(1)
- 		poke(c.io.AFIFO_Data_o.ready,false.B)//need to test two ready  				
+ 		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
 	//step(Random_Num(8,100))
 	step(10)
@@ -137,24 +137,24 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 	for(j<-0 to 21){
 		//step(Random_Num(1,100))
 		step(5)
-		poke(c.io.AFIFO_Data_o.ready,true.B)
-   		expect(c.io.AFIFO_Data_o.bits, CRC_rad_rev(j))//note
+		poke(c.io.out.ready,true.B)
+   		expect(c.io.out.bits, CRC_rad_rev(j))//note
    		step(1)
- 		poke(c.io.AFIFO_Data_o.ready,false.B)//need to test two ready consequently		
+ 		poke(c.io.out.ready,false.B)//need to test two ready consequently		
 	}
 	j=22
-	//poke(c.io.DMA_Data_i.bits,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
-	poke(c.io.AFIFO_Data_o.ready,true.B)
-   	expect(c.io.AFIFO_Data_o.bits, CRC_rad_rev(j))//note
+	poke(c.io.out.ready,true.B)
+   	expect(c.io.out.bits, CRC_rad_rev(j))//note
 
 	j=23
-	//poke(c.io.DMA_Data_i.bits,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
-	poke(c.io.AFIFO_Data_o.ready,true.B)
-   	expect(c.io.AFIFO_Data_o.bits, CRC_rad_rev(j))//note
+	poke(c.io.out.ready,true.B)
+   	expect(c.io.out.bits, CRC_rad_rev(j))//note
 
-	expect(c.io.DMA_Done_o, true.B)//note	
+	expect(c.io.in.done, true.B)//note	
 
 
 
