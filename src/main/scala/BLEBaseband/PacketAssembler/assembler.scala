@@ -5,6 +5,7 @@ import chisel3.util._
 import CRC._
 import Whitening._
 
+
 class PABundle extends Bundle {
 	val trigger = Input(Bool())
 	val data = Flipped(Decoupled(UInt(8.W)))
