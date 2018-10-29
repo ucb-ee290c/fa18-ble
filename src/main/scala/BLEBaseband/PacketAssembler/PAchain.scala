@@ -1,5 +1,6 @@
 package assmebler
 
+import PacketAssembler._
 import chisel3._
 import chisel3.util._
 import dspblocks._
@@ -19,7 +20,7 @@ abstract class WriteQueue
 (
   val depth: Int = 8,
   val streamParameters: AXI4StreamMasterParameters = AXI4StreamMasterParameters()
-) extends LazyModule with HasCSR {
+)(implicit p: Parameters) extends LazyModule with HasCSR {
   // stream node, output only
   val streamNode = AXI4StreamMasterNode(streamParameters)
 
@@ -31,7 +32,7 @@ abstract class WriteQueue
     // width (in bits) of the output interface
     val width = 64
     // instantiate a queue
-    val queue = Module(new Queue(UInt(width, depth)))
+    val queue = Module(new Queue(UInt(width), depth))
     // connect queue output to streaming output
     out.valid := queue.io.deq.valid
     out.bits.data := queue.io.deq.bits
@@ -54,7 +55,7 @@ class TLWriteQueue
   depth: Int = 8,
   csrAddress: AddressSet = AddressSet(0x2000, 0xff),
   beatBytes: Int = 8,
-) extends WriteQueue(depth) with TLHasCSR {
+)(implicit p: Parameters) extends WriteQueue(depth) with TLHasCSR {
   val devname = "tlQueueIn"
   val devcompat = Seq("ucb-art", "dsptools")
   val device = new SimpleDevice(devname, devcompat) {
@@ -76,7 +77,7 @@ abstract class ReadQueue
 (
   val depth: Int = 8,
   val streamParameters: AXI4StreamSlaveParameters = AXI4StreamSlaveParameters()
-) extends LazyModule with HasCSR {
+)(implicit p: Parameters)extends LazyModule with HasCSR {
   val streamNode = AXI4StreamSlaveNode(streamParameters)
 
   lazy val module = new LazyModuleImp(this) {
@@ -88,7 +89,7 @@ abstract class ReadQueue
     // width (in bits) of the input interface
     val width = 64
     // instantiate a queue
-    val queue = Module(new Queue(UInt(width, depth)))
+    val queue = Module(new Queue(UInt(width), depth))
     // connect queue output to streaming output
 
 
@@ -114,7 +115,7 @@ class TLReadQueue
   depth: Int = 8,
   csrAddress: AddressSet = AddressSet(0x2100, 0xff),
   beatBytes: Int = 8
-) extends ReadQueue(depth) with TLHasCSR {
+)(implicit p: Parameters) extends ReadQueue(depth) with TLHasCSR {
   val devname = "tlQueueOut"
   val devcompat = Seq("ucb-art", "dsptools")
   val device = new SimpleDevice(devname, devcompat) {
@@ -129,8 +130,7 @@ class TLReadQueue
 }
 
 
-
-abstract class PABlock extends Module{
+abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends DspBlock[D, U, EO, EI, B] {
   val streamNode = AXI4StreamIdentityNode()
   val mem = None
 
@@ -143,10 +143,10 @@ abstract class PABlock extends Module{
 
     //unpack and pack
     val packet = Module(new PacketAssembler())
-    packet.io.in.bits := in.bits.data.asTypeOf(new PABundle())
+    packet.io.in.data.bits := in.bits.data.asTypeOf(new PABundle())
 
-    packet.io.in.valid := in.valid
-    in.ready := packet.io.in.ready
+    packet.io.in.data.valid := in.valid
+    in.ready := packet.io.in.data.ready
 
     out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready
@@ -155,17 +155,17 @@ abstract class PABlock extends Module{
   }
 }
 
-class TLPABlock extends
-  PABlock[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle]
+class TLPABlock(implicit p: Parameters)extends
+  PABlock[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle] with TLDspBlock
 
 
 class PAThing
 (
   val depth: Int = 8,
-) extends LazyModule {
+)(implicit p: Parameters) extends LazyModule {
   // instantiate lazy modules
   val writeQueue = LazyModule(new TLWriteQueue(depth))
-  val PA = LazyModule(new TLPABlock())
+  val packet = LazyModule(new TLPABlock())
   val readQueue = LazyModule(new TLReadQueue(depth))
 
   // connect streamNodes of queues and cordic
