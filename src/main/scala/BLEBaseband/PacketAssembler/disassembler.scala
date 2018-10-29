@@ -1,25 +1,21 @@
-package PacketDisAssembler//note
+package PacketAssembler//note
 
 import chisel3._
-import chisel3.Util._
+import chisel3.util._
 import CRC._
 import Whitening._
 
 class PDABundle extends Bundle {
 
-  //dma, reg
-  val dma_switch_i = Input(Bool())
-  val reg_aa_i = Input(UInt(32.W))
-  val reg_crc_seed_i = Input(UInt(24.W))
-  val reg_dewhite_seed_i = Input(UInt(7.W))
+  val switch = Input(Bool())
+  val aa = Input(UInt(32.W))
+  val crc_seed = Input(UInt(24.W))
+  val dewhite_seed = Input(UInt(7.W))
 
-  val dma_data_o = DecoupledIO(UInt(8.W)) // decouple(sink): data, push, full
-  val dma_length_o = Decoupled(UInt(8.W))
-  val dma_flag_aa_o = Decoupled(Bool())
-  val dma_flag_crc_o = Decoupled(Bool())
-
-  //async fifo
-  val afifo_data_i = Flipped(DecoupledIO(UInt(1.W)))  // decouple(source): data, pop, empty
+  val data = DecoupledIO(UInt(8.W)) // decouple(sink): data, push, full
+  val payload_length = Decoupled(UInt(8.W))
+  val flag_aa = Decoupled(Bool())
+  val flag_crc = Decoupled(Bool())
 
   override def cloneType: this.type = PDABundle.asInstanceOf[this.type]
 }
@@ -28,358 +24,300 @@ object PDABundle {
   def apply = new PDABundle
 }
 
-class PacketDisAssemblerio extends Bundle {
-  val in = new PDABundle
-  val out = Decoupled(UInt(1.W))
+class PacketDisassemblerIO extends Bundle {
+  val in = Flipped(Decoupled(UInt(1.W)))
+  val out = new PDABundle
 }
 
 
 class PacketDisAssembler extends Module {
-  val io = io(PacketDisAssemblerIO)
+  val io = IO(new PacketDisassemblerIO)
 
-/*
-//testing assignments
-io.dma_data_o.bits := 0.U
-io.dma_data_o.valid := true.B
-io.dma_length_o.bits := 0.U
-io.dma_length_o.valid := true.B
-io.dma_flag_aa_o.bits := true.B
-io.dma_flag_aa_o.valid := true.B
-io.dma_flag_crc_o.bits := true.B
-io.dma_flag_crc_o.valid := true.B
-io.afifo_data_i.ready := true.B
-*/
-
-//scala declaration(note: can be a class)
-  //state parameter
   val idle :: preamble :: aa :: pdu_header :: pdu_payload :: crc :: wait_dma:: nil = Enum(7)
   val state = RegInit(idle)
 
-  //reg, Wire
-  //fsm
-  val state_w =  Wire(UInt(3.W))
-  val state_r = RegInit(UInt(3.W), idle)
-
-  val counter_w = Wire(UInt(8.W))//at most 255 for pdu
-  val counter_r = RegInit(UInt(8.W), 0.U)
-
-  val counter_byte_w = Wire(UInt(3.W))//bit in byte out
-  val counter_byte_r = RegInit(UInt(3.W), 0.U)
+  val counter = RegInit(0.U(8.W))
+  val counter_byte = RegInit(0.U(3.W))
 
   //packet status
-  val pdu_length_r = RegInit(UInt(8.W), 0.U)
-  val pdu_length_valid_r = RegInit(Bool(), false.B)
-  val flag_aa_r = RegInit(Bool(), false.B)
-  val flag_aa_valid_r = RegInit(Bool(), false.B)
-  val flag_crc_r = RegInit(Bool(), false.B)
-  val flag_crc_valid_r = RegInit(Bool(), false.B)
+  val pdu_length = RegInit(0.U(8.W))
+  val pdu_length_valid = RegInit(false.B)
+  val flag_aa = RegInit(false.B)
+  val flag_aa_valid = RegInit(false.B)
+  val flag_crc = RegInit(false.B)
+  val flag_crc_valid = RegInit(false.B)
 
   //preamble
-  val preamble0 = Wire(UInt(8.W))
-  val preamble1 = Wire(UInt(8.W))
+  val preamble0 = "b10101010".U
+  val preamble1 = "b01010101".U
   val preamble01 = Wire(UInt(8.W))
 
-  //dma_data
-  val dma_data_valid_r = RegInit(Bool(), false.B)
-  val dma_data_fire_w = Wire(Bool())
-
-  //afifo
-  val afifo_ready_r = RegInit(Bool(), false.B)
-  val afifo_fire_w = Wire(Bool())
-
-  //data registers
-  //val data_w = Wire(UInt(8.W))
-  val data_w = Wire(vec(8, Bool()))
-  val data_r = RegInit(UInt(8.W), 0.U)
-
-  //crc
-  val crc_reset_w = Wire(Bool())
-  val crc_data_w = Wire(UInt(1.W))
-  val crc_valid_w = Wire(Bool())
-  val crc_result_w = Wire(UInt(24.W))
-  val crc_seed_w = Wire(UInt(24.W))
-
-  //whitening
-  val dewhite_reset_w = Wire(Bool())
-  val dewhite_data_w = Wire(UInt(1.W))
-  val dewhite_valid_w = Wire(Bool())
-  val dewhite_result_w = Wire(UInt(1.W))
-  val dewhite_seed_w = Wire(UInt(7.W))
-
-  //assignments
-    //decouple firing
-  dma_data_fire_w := io.dma_data_o.ready & io.dma_data_o.valid
-  afifo_fire_w := io.afifo_data_i.ready & io.afifo_data_i.valid
-  //pdu_length_fire_w := io.dma_length_o.ready & io.dma_length_o.valid
-  //flag_aa_fire_w := io.dma_flag_aa_o.ready & io.dma_flag_aa_o.valid
-  //flag_crc_fire_w := io.dma_flag_crc_o.ready & io.dma_flag_crc_o.valid
-
-    //preamble hard code
-  preamble0 := "b10101010".U
-  preamble1 := "b01010101".U
-  when(io.reg_aa_i(0) === 0.U){
+  when(io.out.aa(0) === 0.U){
     preamble01 := preamble0
   }.otherwise{
     preamble01 := preamble1
-  }
+  }  
 
+  val in_data_ready = RegInit(false.B)
+  val out_data_valid = RegInit(false.B)
 
-  //output function
-  when(state_r === idle || state_r === preamble){
-    io.dma_data_o.bits := 0.U
+  //data registers
+  val data = RegInit(Vec.fill(8)(false.B))
+
+  //crc
+  val crc_reset = (state === idle)
+  val crc_data = Wire(UInt(1.W))
+  val crc_valid = Wire(Bool())
+  val crc_result = Wire(UInt(24.W))
+  val crc_seed = io.out.crc_seed
+
+  //whitening
+  val dewhite_reset = (state === idle)
+  val dewhite_data = Wire(UInt(1.W))
+  val dewhite_valid = Wire(Bool())
+  val dewhite_result = Wire(UInt(1.W))
+  val dewhite_seed = io.out.dewhite_seed
+
+  //input, output ready/valid
+
+  io.out.payload_length.bits := pdu_length
+  io.out.payload_length.valid := pdu_length_valid
+  io.out.flag_aa.bits := flag_aa
+  io.out.flag_aa.valid := flag_aa_valid
+  io.out.flag_crc.bits := flag_crc
+  io.out.flag_crc.valid := flag_crc_valid
+
+  io.out.data.valid := out_data_valid
+  io.in.ready := in_data_ready
+
+  //output bits
+  when(state === idle || state === preamble){
+    io.out.data.bits := 0.U
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    io.dma_data_o.bits := data_r
+    io.out.data.bits := data.asUInt
   }
-
-  io.dma_length_o.bits := pdu_length_r
-  io.dma_length_o.valid := pdu_length_valid_r
-  io.dma_flag_aa_o.bits := flag_aa_r
-  io.dma_flag_aa_o.valid := flag_aa_valid_r
-  io.dma_flag_crc_o.bits := flag_crc_r
-  io.dma_flag_crc_o.valid := flag_crc_valid_r
-
-  io.dma_data_o.valid := dma_data_valid_r
-  io.afifo_data_i.ready := afifo_ready_r
-
-  //default
-  state_w      := state_r
-  counter_w    := counter_r
-  counter_byte_w := counter_byte_r
-  data_w     := data_r.toBools
-
-  pdu_length_r   := pdu_length_r  // note: preserve value
-  pdu_length_valid_r := pdu_length_valid_r
-  flag_aa_r := flag_aa_r
-  flag_aa_valid_r := flag_aa_valid_r
-  flag_crc_r := flag_crc_r
-  flag_crc_valid_r := flag_crc_valid_r
-
-  dma_data_valid_r := dma_data_valid_r
-  afifo_ready_r  := afifo_ready_r
 
   //statetransition with counter updates
-    //note: counter_r updates when dma_data_fire_w
-    //note: counter_byte_r updates when afifo_fire_w
-  when(state_r === idle){
-    pdu_length_r := 0.U
-    pdu_length_valid_r := false.B
-    flag_aa_r := false.B
-    flag_aa_valid_r := false.B
-    flag_crc_r := false.B
-    flag_crc_valid_r := false.B
-    when(io.dma_switch_i === true.B){ // note: dma_switch_i usage
-      state_w := preamble
+    //note: counter updates when io.out.data.fire()
+    //note: counter_byte updates when io.in.fire()
+  when(state === idle){
+    pdu_length := 0.U
+    pdu_length_valid := false.B
+    flag_aa := false.B
+    flag_aa_valid := false.B
+    flag_crc := false.B
+    flag_crc_valid := false.B
+    when(io.out.switch === true.B){ // note: dma_switch_i usage
+      state := preamble
     }.otherwise{
-      state_w := idle
+      state := idle
     }
-  }.elsewhen(state_r === preamble){
-    when(data_w.asUInt === preamble01){ // note: data_w or data_r
-      state_w := aa
-      counter_w := 0.U
-      counter_byte_w := 0.U
+  }.elsewhen(state === preamble){
+    when(data.asUInt === preamble01){
+      state := aa
+      counter := 0.U
+      counter_byte := 0.U
     }.otherwise{
-      state_w := preamble
+      state := preamble
     }
-  }.elsewhen(state_r === aa){
-    when(counter_r === 3.U && dma_data_fire_w === true.B){//note
-      state_w := pdu_header
-      counter_w := 0.U
-      counter_byte_w := 0.U
+  }.elsewhen(state === aa){
+    when(counter === 3.U && io.out.data.fire()){//note
+      state := pdu_header
+      counter := 0.U
+      counter_byte := 0.U
     }.otherwise{
-      state_w := aa
-      when(dma_data_fire_w === true.B){
-        counter_w := counter_r+1.U
+      state := aa
+      when(io.out.data.fire()){
+        counter := counter+1.U
       }
-      when(afifo_fire_w === true.B){
-        when(counter_byte_r === 7.U){
-          counter_byte_w := 0.U
+      when(io.in.fire()){
+        when(counter_byte === 7.U){
+          counter_byte := 0.U
         }.otherwise{
-          counter_byte_w := counter_byte_r+1.U
+          counter_byte := counter_byte+1.U
         }
       }
     }
-  }.elsewhen(state_r === pdu_header){
-    when(counter_r === 1.U && dma_data_fire_w === true.B){//note
-      state_w := pdu_payload
-      counter_w := 0.U
-      counter_byte_w := 0.U
+  }.elsewhen(state === pdu_header){
+    when(counter === 1.U && io.out.data.fire()){//note
+      state := pdu_payload
+      counter := 0.U
+      counter_byte := 0.U
     }.otherwise{
-      state_w := pdu_header
-      when(dma_data_fire_w === true.B){
-        counter_w := counter_r+1.U
+      state := pdu_header
+      when(io.out.data.fire()){
+        counter := counter+1.U
       }
-      when(afifo_fire_w === true.B){
-        when(counter_byte_r === 7.U){
-          counter_byte_w := 0.U
+      when(io.in.fire()){
+        when(counter_byte === 7.U){
+          counter_byte := 0.U
         }.otherwise{
-          counter_byte_w := counter_byte_r+1.U
+          counter_byte := counter_byte+1.U
         }
       }
     }
-  }.elsewhen(state_r === pdu_payload){
-    when(counter_r === pdu_length_r-1.U && dma_data_fire_w === true.B){//note
-      state_w := crc
-      counter_w := 0.U
-      counter_byte_w := 0.U
+  }.elsewhen(state === pdu_payload){
+    when(counter === pdu_length - 1.U && io.out.data.fire()){//note
+      state := crc
+      counter := 0.U
+      counter_byte := 0.U
     }.otherwise{
-      state_w := pdu_payload
-      when(dma_data_fire_w === true.B){
-        counter_w := counter_r+1.U
+      state := pdu_payload
+      when(io.out.data.fire()){
+        counter := counter+1.U
       }
-      when(afifo_fire_w === true.B){
-        when(counter_byte_r === 7.U){
-          counter_byte_w := 0.U
+      when(io.in.fire()){
+        when(counter_byte === 7.U){
+          counter_byte := 0.U
         }.otherwise{
-          counter_byte_w := counter_byte_r+1.U
+          counter_byte := counter_byte+1.U
         }
       }
     }
-  }.elsewhen(state_r === crc){
-    when(counter_r === 2.U && dma_data_fire_w === true.B){
-      state_w := wait_dma
-      counter_w := 0.U
-      counter_byte_w := 0.U
+  }.elsewhen(state === crc){
+    when(counter === 2.U && io.out.data.fire()){
+      state := wait_dma
+      counter := 0.U
+      counter_byte := 0.U
     }.otherwise{
-      state_w := crc
-      when(dma_data_fire_w === true.B){
-        counter_w := counter_r+1.U
+      state := crc
+      when(io.out.data.fire() === true.B){
+        counter := counter + 1.U
       }
-      when(afifo_fire_w === true.B){
-        when(counter_byte_r === 7.U){
-          counter_byte_w := 0.U
+      when(io.in.fire()){
+        when(counter_byte === 7.U){
+          counter_byte := 0.U
         }.otherwise{
-          counter_byte_w := counter_byte_r+1.U
+          counter_byte := counter_byte + 1.U
         }
       }
     }
-  }.elsewhen(state_r === wait_dma) {
-    when (io.dma_length_o.ready === true.B && io.dma_flag_aa_o.ready === true.B && io.dma_flag_crc_o.ready === true.B) {
-      state_w := idle
+  }.elsewhen(state === wait_dma) {
+    when (io.out.payload_length.ready === true.B && io.out.flag_aa.ready === true.B && io.out.flag_crc.ready === true.B) {
+      state := idle
     }.otherwise {
-      state_w := wait_dma
+      state := wait_dma
     }
   }.otherwise{
-    state_w := idle//error
+    state := idle//error
   }
 
     //pdu_length
-  when(state_r === pdu_header && counter_r === 1.U && dma_data_fire_w === true.B){//note: can change to intuitive statement(add fire_w) with data_w
-    pdu_length_r := data_r
-    pdu_length_valid_r := true.B
-  }.elsewhen(state_w === idle) {
-    pdu_length_valid_r := false.B
+  when(state === pdu_header && counter === 1.U && io.out.data.fire() === true.B){//note: can change to intuitive statement(add fire_w) with data
+    pdu_length := data.asUInt
+    pdu_length_valid := true.B
+  }.elsewhen(state === idle) {
+    pdu_length_valid := false.B
   }.otherwise{
     //do nothing: registers preserve value
   }
 
-    //flag_aa
-  when(state_r === aa && counter_r === 0.U && dma_data_fire_w === true.B){//note: same as above
-    when(data_r =/= io.reg_aa_i(7,0)){
-      flag_aa_r := true.B
-      flag_aa_valid_r := true.B
+    //flag_aa   
+  when(state === aa && counter === 0.U && io.out.data.fire() === true.B){//note: same as above
+    when(data.asUInt =/= io.out.aa(7,0)){
+      flag_aa := true.B
+      flag_aa_valid := true.B
     }
-  }.elsewhen(state_r === aa && counter_r === 1.U && dma_data_fire_w === true.B){
-    when(data_r =/= io.reg_aa_i(15,8)){
-      flag_aa_r := true.B
-      flag_aa_valid_r := true.B
+  }.elsewhen(state === aa && counter === 1.U && io.out.data.fire() === true.B){
+    when(data.asUInt =/= io.out.aa(15,8)){
+      flag_aa := true.B
+      flag_aa_valid := true.B
     }
-  }.elsewhen(state_r === aa && counter_r === 2.U && dma_data_fire_w === true.B){
-    when(data_r =/= io.reg_aa_i(23,16)){
-      flag_aa_r := true.B
-      flag_aa_valid_r := true.B
+  }.elsewhen(state === aa && counter === 2.U && io.out.data.fire() === true.B){
+    when(data.asUInt =/= io.out.aa(23,16)){
+      flag_aa := true.B
+      flag_aa_valid := true.B
     }
-  }.elsewhen(state_r === aa && counter_r === 3.U && dma_data_fire_w === true.B){
-    when(data_r =/= io.reg_aa_i(31,24)){
-      flag_aa_r := true.B
-      flag_aa_valid_r := true.B
+  }.elsewhen(state === aa && counter === 3.U && io.out.data.fire() === true.B){
+    when(data.asUInt =/= io.out.aa(31,24)){
+      flag_aa := true.B
+      flag_aa_valid := true.B
     }.otherwise{
-      flag_aa_valid_r := true.B
+      flag_aa_valid := true.B
     }
   }.otherwise{
-    //do nothing: registers preserve value
+
   }
 
     //flag_crc
-  when(state_r === crc && counter_r === 0.U && dma_data_fire_w === true.B){//note: same as above
-    when(data_r =/= crc_result_w(7,0)){
-      flag_crc_r := true.B
-      flag_crc_valid_r := true.B
+  when(state === crc && counter === 0.U && io.out.data.fire() === true.B){//note: same as above
+    when(data.asUInt =/= crc_result(7,0)){
+      flag_crc := true.B
+      flag_crc_valid := true.B
     }
-  }.elsewhen(state_r === crc && counter_r === 1.U && dma_data_fire_w === true.B){
-    when(data_r =/= crc_result_w(15,8)){
-      flag_crc_r := true.B
-      flag_crc_valid_r := true.B
+  }.elsewhen(state === crc && counter === 1.U && io.out.data.fire() === true.B){
+    when(data.asUInt =/= crc_result(15,8)){
+      flag_crc := true.B
+      flag_crc_valid := true.B
     }
-  }.elsewhen(state_r === crc && counter_r === 2.U && dma_data_fire_w === true.B){
-    when(data_r =/= crc_result_w(23,16)){
-      flag_crc_r := true.B
-      flag_crc_valid_r := true.B
+  }.elsewhen(state === crc && counter === 2.U && io.out.data.fire() === true.B){
+    when(data.asUInt =/= crc_result(23,16)){
+      flag_crc := true.B
+      flag_crc_valid := true.B
     }.otherwise{
-      flag_crc_valid_r := true.B
+      flag_crc_valid := true.B
     }
   }.otherwise{
     //do nothing: registers preserve value
   }
 
 
-  //dma_data_valid_r//note:check corner cases
-  when(state_r === idle || state_r === preamble){
-    dma_data_valid_r := false.B
+  //out_data_valid //note:check corner cases
+  when(state === idle || state === preamble){
+    out_data_valid := false.B
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    when(counter_byte_r === 7.U && afifo_fire_w === true.B){
-      dma_data_valid_r := true.B
-    }.elsewhen(dma_data_fire_w === true.B){
-      dma_data_valid_r := false.B
+    when(counter_byte === 7.U && io.in.fire()){
+      out_data_valid := true.B
+    }.elsewhen(io.out.data.fire()){
+      out_data_valid := false.B
     }
   }
 
-  //afifo_ready_w //note:check corner cases
-  when(state_r === idle){
-    afifo_ready_r := false.B
-  }.elsewhen(state_r === preamble){
-    afifo_ready_r := true.B
+  //in_data_ready //note:check corner cases
+  when(state === idle){
+    in_data_ready := false.B
+  }.elsewhen(state === preamble){
+    in_data_ready := true.B
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    when(counter_byte_r === 7.U && afifo_fire_w === true.B){
-      afifo_ready_r := false.B
-    }.elsewhen(dma_data_fire_w === true.B){
-      afifo_ready_r := true.B
+    when(counter_byte === 7.U && io.in.fire()){
+      in_data_ready := false.B
+    }.elsewhen(io.out.data.fire()){
+      in_data_ready := true.B
     }
   }
 
   //data
-  when(state_r === pdu_header || state_r === pdu_payload || state_r === crc){
-    when(afifo_fire_w === true.B){
-      //data_w(counter_byte_r) := dewhite_result_w.toBools
-      when(dewhite_result_w===0.U){
-        data_w(counter_byte_r) := false.B
+  when(state === pdu_header || state === pdu_payload || state === crc){
+    when(io.in.fire()){
+      when(dewhite_result === 0.U)
+      {
+        data(counter_byte) := false.B
       }.otherwise{
-        data_w(counter_byte_r) := true.B
+        data(counter_byte) := true.B
       }
     }
-  }.elsewhen(state_r === preamble){
-    when(afifo_fire_w === true.B){
-      //data_w(7) := io.afifo_data_i.bits.toBools //note: subword assignment
-      when(io.afifo_data_i.bits===0.U){
-        data_w(7) := false.B
+  }.elsewhen(state === preamble){
+    when(io.in.fire()){
+      when(io.in.bits === 0.U){
+        data(7) := false.B
       }.otherwise{
-        data_w(7) := true.B
+        data(7) := true.B
       }
-      for(i<-0 to 6){//value shifting
-        //data_w(i) := data_r(i+1).toBools
-        when(data_r(i+1)===0.U){
-          data_w(i) := false.B
+      for(i<- 0 to 6){
+        when(data(i+1) === 0.U){
+          data(i) := false.B 
         }.otherwise{
-          data_w(i) := true.B
+          data(i) := true.B
         }
       }
     }
-  }.elsewhen(state_r === aa){
-    when(afifo_fire_w === true.B){
-      //data_w(counter_byte_r) := io.afifo_data_i.bits.toBools
-      when(io.afifo_data_i.bits===0.U){
-        data_w(counter_byte_r) := false.B
+  }.elsewhen(state === aa){
+    when(io.in.fire()){
+      //data(counter_byte) := io.in.bits.toBools
+      when(io.in.bits===0.U){
+        data(counter_byte) := false.B
       }.otherwise{
-        data_w(counter_byte_r) := true.B
+        data(counter_byte) := true.B
       }
     }
   }.otherwise{//idle
@@ -387,73 +325,40 @@ io.afifo_data_i.ready := true.B
   }
 
   //crc
-  crc_reset_w := (state_r === idle)
-  when(state_r === pdu_header || state_r === pdu_payload){//check corner cases
-    crc_data_w := dewhite_result_w
-    crc_valid_w := afifo_fire_w
+  when(state === pdu_header || state === pdu_payload){//check corner cases
+    crc_data := dewhite_result
+    crc_valid := io.in.fire()
   }.otherwise{
-    crc_data_w := 0.U
-    crc_valid_w := false.B
+    crc_data := 0.U
+    crc_valid := false.B
   }
-  //crc_result_w Wires to crc Module
-  crc_seed_w := io.reg_crc_seed_i
 
   //dewhitening
-  dewhite_reset_w := (state_r === idle)
-  when(state_r === pdu_header || state_r === pdu_payload || state_r === crc){//check corner cases
-    dewhite_data_w  := io.afifo_data_i.bits
-    dewhite_valid_w := afifo_fire_w
+  when(state === pdu_header || state === pdu_payload || state === crc){//check corner cases
+    dewhite_data  := io.in.bits
+    dewhite_valid := io.in.fire()
   }.otherwise{
-    dewhite_data_w  := 0.U
-    dewhite_valid_w := false.B
+    dewhite_data  := 0.U
+    dewhite_valid := false.B
   }
-  //dewhite_result_w Wires to white Module
-  dewhite_seed_w := io.reg_dewhite_seed_i
-
-  //sequential logic
-  state_r      := state_w
-  counter_r    := counter_w
-  counter_byte_r := counter_byte_w
-  data_r     := data_w.asUInt
 
   //crc instantiate
   val crc_inst = Module(new Serial_CRC)
 
-  crc_inst.io.init := crc_reset_w
-  crc_inst.io.operand.bits := crc_data_w
-  crc_inst.io.operand.valid := crc_valid_w
-  crc_result_w := crc_inst.io.result.bits
+  crc_inst.io.init := crc_reset
+  crc_inst.io.operand.bits := crc_data
+  crc_inst.io.operand.valid := crc_valid
+  crc_result := crc_inst.io.result.bits
   crc_inst.io.result.ready := true.B
-  crc_inst.io.seed := crc_seed_w
+  crc_inst.io.seed := crc_seed
 
   //whitening instantiate
   val white_inst = Module(new Whitening)
 
-  white_inst.io.init := dewhite_reset_w
-  white_inst.io.operand.bits := dewhite_data_w
-  white_inst.io.operand.valid := dewhite_valid_w
-  dewhite_result_w := white_inst.io.result.bits
+  white_inst.io.init := dewhite_reset
+  white_inst.io.operand.bits := dewhite_data
+  white_inst.io.operand.valid := dewhite_valid
+  dewhite_result := white_inst.io.result.bits
   white_inst.io.result.ready := true.B
-  white_inst.io.seed := dewhite_seed_w
-
-/*
-//for testing
-  //crc instantiate
-  val crc_inst = Module(new crc_testModule)
-
-  crc_inst.io.init := crc_reset_w
-  crc_inst.io.operand.bits := crc_data_w
-  crc_inst.io.operand.valid := crc_valid_w
-  crc_result_w := crc_inst.io.result
-  crc_inst.io.seed := crc_seed_w
-
-  //whitening instantiate
-  val white_inst = Module(new whitening_testModule)
-
-  white_inst.io.init := dewhite_reset_w
-  white_inst.io.operand.bits := dewhite_data_w
-  white_inst.io.operand.valid := dewhite_valid_w
-  dewhite_result_w := white_inst.io.result
-  white_inst.io.seed := dewhite_seed_w
-*/
+  white_inst.io.seed := dewhite_seed
 }

@@ -19,7 +19,7 @@ abstract class WriteQueue
 (
   val depth: Int = 8,
   val streamParameters: AXI4StreamMasterParameters = AXI4StreamMasterParameters()
-)(implicit) extends LazyModule with HasCSR {
+) extends LazyModule with HasCSR {
   // stream node, output only
   val streamNode = AXI4StreamMasterNode(streamParameters)
 
@@ -54,7 +54,7 @@ class TLWriteQueue
   depth: Int = 8,
   csrAddress: AddressSet = AddressSet(0x2000, 0xff),
   beatBytes: Int = 8,
-)(implicit) extends WriteQueue(depth) with TLHasCSR {
+) extends WriteQueue(depth) with TLHasCSR {
   val devname = "tlQueueIn"
   val devcompat = Seq("ucb-art", "dsptools")
   val device = new SimpleDevice(devname, devcompat) {
@@ -76,7 +76,7 @@ abstract class ReadQueue
 (
   val depth: Int = 8,
   val streamParameters: AXI4StreamSlaveParameters = AXI4StreamSlaveParameters()
-)(implicit:) extends LazyModule with HasCSR {
+) extends LazyModule with HasCSR {
   val streamNode = AXI4StreamSlaveNode(streamParameters)
 
   lazy val module = new LazyModuleImp(this) {
@@ -114,7 +114,7 @@ class TLReadQueue
   depth: Int = 8,
   csrAddress: AddressSet = AddressSet(0x2100, 0xff),
   beatBytes: Int = 8
-)(implicit) extends ReadQueue(depth) with TLHasCSR {
+) extends ReadQueue(depth) with TLHasCSR {
   val devname = "tlQueueOut"
   val devcompat = Seq("ucb-art", "dsptools")
   val device = new SimpleDevice(devname, devcompat) {
@@ -130,8 +130,7 @@ class TLReadQueue
 
 
 
-abstract class PABlock
-(implicit) extends Module{
+abstract class PABlock extends Module{
   val streamNode = AXI4StreamIdentityNode()
   val mem = None
 
@@ -149,21 +148,21 @@ abstract class PABlock
     packet.io.in.valid := in.valid
     in.ready := packet.io.in.ready
 
-    out.valid := cordic.io.out.valid
+    out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready
 
     out.bits.data := packet.io.out.bits.asUInt()
   }
 }
 
-class TLPABlock (implicit) extends
+class TLPABlock extends
   PABlock[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle]
 
 
 class PAThing
 (
   val depth: Int = 8,
-)(implicit) extends LazyModule {
+) extends LazyModule {
   // instantiate lazy modules
   val writeQueue = LazyModule(new TLWriteQueue(depth))
   val PA = LazyModule(new TLPABlock())
