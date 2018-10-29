@@ -1,4 +1,4 @@
-package cordic
+package PacketAssembler
 
 import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.devices.tilelink._

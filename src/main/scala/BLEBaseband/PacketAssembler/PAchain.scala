@@ -1,4 +1,4 @@
-package assmebler
+package PacketAssembler
 
 import PacketAssembler._
 import chisel3._
