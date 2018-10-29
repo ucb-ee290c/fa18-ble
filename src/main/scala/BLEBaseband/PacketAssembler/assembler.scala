@@ -24,6 +24,13 @@ class PacketAssemblerIO extends Bundle {
 	val out = Decoupled(UInt(1.W))
 }
 
+trait HasPeripheryPA extends BaseSubsystem {
+  // instantiate cordic chain
+  val paChain = LazyModule(new CordicThing(FixedCordicParams(8, 10)))
+  // connect memory interfaces to pbus
+  pbus.toVariableWidthSlave(Some("paWrite")) { paChain.writeQueue.mem.get }
+  pbus.toVariableWidthSlave(Some("paRead")) { paChain.readQueue.mem.get }
+}
 
 class PacketAssembler extends Module {
     val io = IO(new PacketAssemblerIO)
