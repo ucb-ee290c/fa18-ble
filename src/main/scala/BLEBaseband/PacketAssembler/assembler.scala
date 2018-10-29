@@ -18,12 +18,18 @@ class PABundle extends Bundle {
 	override def cloneType: this.type = PABundle.asInstanceOf[this.type]
 }
 object PABundle {
-  def apply = new PABundle
+  def apply: PABundle = new PABundle
 }
 
 class PacketAssemblerIO extends Bundle {
 	val in = new PABundle
 	val out = Decoupled(UInt(1.W))
+
+	override def cloneType: this.type = PacketAssemblerIO.asInstanceOf[this.type]
+}
+
+object PacketAssemblerIO {
+  def apply: PacketAssemblerIO = new PacketAssemblerIO
 }
 
 trait HasPeripheryPA extends BaseSubsystem {
