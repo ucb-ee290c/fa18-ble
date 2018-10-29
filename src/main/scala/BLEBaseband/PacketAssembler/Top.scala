@@ -19,8 +19,8 @@ class ExampleTopModule[+L <: ExampleTop](l: L) extends RocketSubsystemModuleImp(
     with HasExtInterruptsModuleImp
     with DontTouch
 
-class ExampleTopWithCordic(implicit p: Parameters) extends ExampleTop
+class ExampleTopWithPA(implicit p: Parameters) extends ExampleTop
     // mix in cordic
-    with HasPeripheryCordic {
+    with HasPeripheryPA {
   override lazy val module = new ExampleTopModule(this)
 }

@@ -13,7 +13,7 @@ class TestHarness()(implicit p: Parameters) extends Module {
     val success = Output(Bool())
   })
 
-  val dut = Module(LazyModule(new ExampleTopWithCordic).module)
+  val dut = Module(LazyModule(new ExampleTopWithPA).module)
   dut.reset := reset.toBool() | dut.debug.ndreset
 
   dut.dontTouchPorts()
