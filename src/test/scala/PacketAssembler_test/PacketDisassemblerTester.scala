@@ -150,7 +150,7 @@ class PacketDisAssemblerTest(c: PacketDisAssembler) extends PeekPokeTester(c) {
   poke(c.io.out.switch, false.B)
 
   poke(c.io.out.data.ready, false.B)
-  poke(c.io.out.payload_length.ready, false.B)
+  poke(c.io.out.pdu_length.ready, false.B)
   poke(c.io.out.flag_aa.ready, false.B)
   poke(c.io.out.flag_crc.ready, false.B)
 
@@ -163,7 +163,7 @@ class PacketDisAssemblerTest(c: PacketDisAssembler) extends PeekPokeTester(c) {
   poke(c.io.out.switch, true.B)
 
   poke(c.io.out.data.ready, true.B)
-  poke(c.io.out.payload_length.ready, true.B)
+  poke(c.io.out.pdu_length.ready, true.B)
   poke(c.io.out.flag_aa.ready, true.B)
   poke(c.io.out.flag_crc.ready, true.B)
 
@@ -197,13 +197,13 @@ class PacketDisAssemblerTest(c: PacketDisAssembler) extends PeekPokeTester(c) {
   PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in, writeData = Testcase.wholepacket_rad_rev,
     startBit = 32, endBit = 47,
     outputByteFifo = c.io.out.data, checkData = Testcase.wholepacket_dig_rev)
-  step(1) // need an extra cycle before out.payload_length is valid
-  expect(c.io.out.payload_length.bits, 16.U)
-  expect(c.io.out.payload_length.valid, true.B)
-  println(s"j=out.payload_length\n${peek(c.io.out.payload_length.bits)}\t16.U")
+  step(1) // need an extra cycle before out.pdu_length is valid
+  expect(c.io.out.pdu_length.bits, 16.U)
+  expect(c.io.out.pdu_length.valid, true.B)
+  println(s"j=out.pdu_length\n${peek(c.io.out.pdu_length.bits)}\t16.U")
 
   step(1)
-  poke(c.io.out.payload_length.ready, false.B)
+  poke(c.io.out.pdu_length.ready, false.B)
 
   // PDU_PAYLOAD
   PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in, writeData = Testcase.wholepacket_rad_rev,

@@ -12,16 +12,16 @@ class PDABundle extends Bundle {
   val crc_seed = Input(UInt(24.W))
   val dewhite_seed = Input(UInt(7.W))
 
-  val data = DecoupledIO(UInt(8.W)) // decouple(sink): data, push, full
-  val payload_length = Decoupled(UInt(8.W))
+  val data = Decoupled(UInt(8.W)) // decouple(sink): data, push, full
+  val pdu_length = Decoupled(UInt(8.W))
   val flag_aa = Decoupled(Bool())
   val flag_crc = Decoupled(Bool())
 
-  override def cloneType: this.type = PDABundle.asInstanceOf[this.type]
+  override def cloneType: this.type = PDABundle().asInstanceOf[this.type]
 }
 
 object PDABundle {
-  def apply = new PDABundle
+  def apply() = new PDABundle
 }
 
 class PacketDisassemblerIO extends Bundle {
@@ -46,6 +46,8 @@ class PacketDisAssembler extends Module {
   val flag_aa_valid = RegInit(false.B)
   val flag_crc = RegInit(false.B)
   val flag_crc_valid = RegInit(false.B)
+  val in_data_ready = RegInit(false.B)
+  val out_data_valid = RegInit(false.B)
 
   //preamble
   val preamble0 = "b10101010".U
@@ -58,8 +60,6 @@ class PacketDisAssembler extends Module {
     preamble01 := preamble1
   }  
 
-  val in_data_ready = RegInit(false.B)
-  val out_data_valid = RegInit(false.B)
 
   //data registers
   val data = RegInit(Vec.fill(8)(false.B))
@@ -80,8 +80,8 @@ class PacketDisAssembler extends Module {
 
   //input, output ready/valid
 
-  io.out.payload_length.bits := pdu_length
-  io.out.payload_length.valid := pdu_length_valid
+  io.out.pdu_length.bits := pdu_length
+  io.out.pdu_length.valid := pdu_length_valid
   io.out.flag_aa.bits := flag_aa
   io.out.flag_aa.valid := flag_aa_valid
   io.out.flag_crc.bits := flag_crc
@@ -128,31 +128,31 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := aa
       when(io.out.data.fire()){
-        counter := counter+1.U
+        counter := counter + 1.U
       }
       when(io.in.fire()){
         when(counter_byte === 7.U){
           counter_byte := 0.U
         }.otherwise{
-          counter_byte := counter_byte+1.U
+          counter_byte := counter_byte + 1.U
         }
       }
     }
   }.elsewhen(state === pdu_header){
-    when(counter === 1.U && io.out.data.fire()){//note
+    when(counter === 1.U && io.out.data.fire()){
       state := pdu_payload
       counter := 0.U
       counter_byte := 0.U
     }.otherwise{
       state := pdu_header
       when(io.out.data.fire()){
-        counter := counter+1.U
+        counter := counter + 1.U
       }
       when(io.in.fire()){
         when(counter_byte === 7.U){
           counter_byte := 0.U
         }.otherwise{
-          counter_byte := counter_byte+1.U
+          counter_byte := counter_byte + 1.U
         }
       }
     }
@@ -164,13 +164,13 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := pdu_payload
       when(io.out.data.fire()){
-        counter := counter+1.U
+        counter := counter + 1.U
       }
       when(io.in.fire()){
         when(counter_byte === 7.U){
           counter_byte := 0.U
         }.otherwise{
-          counter_byte := counter_byte+1.U
+          counter_byte := counter_byte + 1.U
         }
       }
     }
@@ -193,7 +193,7 @@ class PacketDisAssembler extends Module {
       }
     }
   }.elsewhen(state === wait_dma) {
-    when (io.out.payload_length.ready === true.B && io.out.flag_aa.ready === true.B && io.out.flag_crc.ready === true.B) {
+    when (io.out.pdu_length.ready === true.B && io.out.flag_aa.ready === true.B && io.out.flag_crc.ready === true.B) {
       state := idle
     }.otherwise {
       state := wait_dma
@@ -203,32 +203,30 @@ class PacketDisAssembler extends Module {
   }
 
     //pdu_length
-  when(state === pdu_header && counter === 1.U && io.out.data.fire() === true.B){//note: can change to intuitive statement(add fire_w) with data
+  when(state === pdu_header && counter === 1.U && io.out.data.fire()){//note: can change to intuitive statement(add fire_w) with data
     pdu_length := data.asUInt
     pdu_length_valid := true.B
   }.elsewhen(state === idle) {
     pdu_length_valid := false.B
-  }.otherwise{
-    //do nothing: registers preserve value
   }
 
     //flag_aa   
-  when(state === aa && counter === 0.U && io.out.data.fire() === true.B){//note: same as above
+  when(state === aa && counter === 0.U && io.out.data.fire()){//note: same as above
     when(data.asUInt =/= io.out.aa(7,0)){
       flag_aa := true.B
       flag_aa_valid := true.B
     }
-  }.elsewhen(state === aa && counter === 1.U && io.out.data.fire() === true.B){
+  }.elsewhen(state === aa && counter === 1.U && io.out.data.fire()){
     when(data.asUInt =/= io.out.aa(15,8)){
       flag_aa := true.B
       flag_aa_valid := true.B
     }
-  }.elsewhen(state === aa && counter === 2.U && io.out.data.fire() === true.B){
+  }.elsewhen(state === aa && counter === 2.U && io.out.data.fire()){
     when(data.asUInt =/= io.out.aa(23,16)){
       flag_aa := true.B
       flag_aa_valid := true.B
     }
-  }.elsewhen(state === aa && counter === 3.U && io.out.data.fire() === true.B){
+  }.elsewhen(state === aa && counter === 3.U && io.out.data.fire()){
     when(data.asUInt =/= io.out.aa(31,24)){
       flag_aa := true.B
       flag_aa_valid := true.B
@@ -240,17 +238,17 @@ class PacketDisAssembler extends Module {
   }
 
     //flag_crc
-  when(state === crc && counter === 0.U && io.out.data.fire() === true.B){//note: same as above
+  when(state === crc && counter === 0.U && io.out.data.fire()){//note: same as above
     when(data.asUInt =/= crc_result(7,0)){
       flag_crc := true.B
       flag_crc_valid := true.B
     }
-  }.elsewhen(state === crc && counter === 1.U && io.out.data.fire() === true.B){
+  }.elsewhen(state === crc && counter === 1.U && io.out.data.fire()){
     when(data.asUInt =/= crc_result(15,8)){
       flag_crc := true.B
       flag_crc_valid := true.B
     }
-  }.elsewhen(state === crc && counter === 2.U && io.out.data.fire() === true.B){
+  }.elsewhen(state === crc && counter === 2.U && io.out.data.fire()){
     when(data.asUInt =/= crc_result(23,16)){
       flag_crc := true.B
       flag_crc_valid := true.B
@@ -303,7 +301,7 @@ class PacketDisAssembler extends Module {
       }.otherwise{
         data(7) := true.B
       }
-      for(i<- 0 to 6){
+      for(i<-0 to 6){
         when(data(i+1) === 0.U){
           data(i) := false.B 
         }.otherwise{

@@ -1,6 +1,5 @@
 package PacketAssembler
 
-import PacketAssembler._
 import chisel3._
 import chisel3.util._
 import dspblocks._
@@ -143,10 +142,9 @@ abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends
 
     //unpack and pack
     val packet = Module(new PacketAssembler())
-    packet.io.in := in.bits.data.asTypeOf(new PABundle())
-
-    packet.io.in.data.valid := in.valid
-    in.ready := packet.io.in.data.ready
+    packet.io.in.bits := in.bits.data.asTypeOf(new PABundle())
+    packet.io.in.valid := in.valid
+    in.ready := packet.io.in.ready
 
     out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready

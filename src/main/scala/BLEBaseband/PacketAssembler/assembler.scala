@@ -15,22 +15,22 @@ class PABundle extends Bundle {
 	val white_seed = Input(UInt(7.W))
 	val done = Output(Bool())
 
-	override def cloneType: this.type = PABundle.asInstanceOf[this.type]
+	override def cloneType: this.type = PABundle().asInstanceOf[this.type]
 }
 object PABundle {
-  def apply: PABundle = new PABundle
+  def apply(): PABundle = new PABundle
 }
 
 class PacketAssemblerIO extends Bundle {
-	val in = new PABundle
+	val in = Flipped(Decoupled(PABundle()))
 	val out = Decoupled(UInt(1.W))
 
-	override def cloneType: this.type = PacketAssemblerIO.asInstanceOf[this.type]
+	override def cloneType: this.type = PacketAssemblerIO().asInstanceOf[this.type]
 }
 
 object PacketAssemblerIO {
-  def apply: PacketAssemblerIO = new PacketAssemblerIO
-}
+  def apply(): PacketAssemblerIO = new PacketAssemblerIO
+}	
 
 trait HasPeripheryPA extends BaseSubsystem {
   // instantiate cordic chain
@@ -64,21 +64,21 @@ class PacketAssembler extends Module {
 	val data = RegInit(0.U(8.W))
 
 	//CRC
-	val crc_reset = io.in.trigger
+	val crc_reset = io.in.bits.trigger
 	val crc_data = Wire(UInt(1.W))
 	val crc_valid = Wire(Bool())
 	val crc_result = Wire(UInt(24.W))
-	val crc_seed = io.in.crc_seed
+	val crc_seed = io.in.bits.crc_seed
 
 	//whitening
-	val white_reset = io.in.trigger
+	val white_reset = io.in.bits.trigger
 	val white_data = Wire(UInt(1.W))
 	val white_valid = Wire(Bool())	
 	val white_result = Wire(UInt(1.W))
-	val white_seed = io.in.white_seed			
+	val white_seed = io.in.bits.white_seed			
 
 	//decouple assignments
-	io.in.data.ready := in_ready
+	io.in.ready := in_ready
 	io.out.valid := out_valid
 
 	//output bits
@@ -92,15 +92,15 @@ class PacketAssembler extends Module {
 		}
 	}
 
-	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire() === true.B){//end of the packet
-		io.in.done := true.B	
+/*	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire() === true.B){//end of the packet
+		io.in.bits.done := true.B	
 	}.otherwise{
-		io.in.done := false.B
+		io.in.bits.done := false.B
 	}
-
+*/
 	//State Transition with counter updates
 	when(state === idle){
-		when(io.in.trigger === true.B){
+		when(io.in.bits.trigger === true.B){
 			state := preamble
 			counter := 0.U
 			counter_byte := 0.U
@@ -205,7 +205,7 @@ class PacketAssembler extends Module {
 			in_ready := false.B//special case at the end of PAYLOAD		
 		}.elsewhen(counter_byte === 7.U && io.out.fire() === true.B){
 			in_ready := true.B
-		}.elsewhen(io.in.data.fire() === true.B){
+		}.elsewhen(io.in.bits.data.fire() === true.B){
 			in_ready := false.B		
 		}.otherwise{
 			//do nothing
@@ -236,20 +236,20 @@ class PacketAssembler extends Module {
 	}.otherwise{//aa, pdu_header, pdu_payload
 		when(counter_byte === 7.U && io.out.fire() === true.B){
 			out_valid := false.B			
-		}.elsewhen(io.in.data.fire() === true.B){
+		}.elsewhen(io.in.bits.data.fire() === true.B){
 			out_valid := true.B				
 		}
 	}
 
 	//data
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(io.in.data.fire()){
-			data := io.in.data.bits			
+		when(io.in.bits.data.fire()){
+			data := io.in.bits.data.bits			
 		}.otherwise{
 			data := data
 		}
 	}.elsewhen(state === preamble){
-		when(io.in.data.bits(0) === 0.U){//note: problems when not firing
+		when(io.in.bits.data.bits(0) === 0.U){//note: problems when not firing
 			data := preamble0
 		}.otherwise{
 			data := preamble1
