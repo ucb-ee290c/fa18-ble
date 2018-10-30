@@ -49,9 +49,10 @@ int main(void)
   uint64_t done = 0;
   //uint64_t preamble = 01010101;
 
-
+  uint8_t AA_eight;
   for (int i = 0; i < 4; i++ ){
-    reg_write64(CORDIC_WRITE, pack_PABundle(trigger, AA[31-8*i, 24-8*i], crc_seed, white_seed, done));
+    AA_eight = AA>>8*(3-i);
+    reg_write64(CORDIC_WRITE, pack_PABundle(trigger, AA_eight, crc_seed, white_seed, done));
     uint64_t unpack = reg_read64(CORDIC_READ);
 
     printf("unpack data: %d", unpack_data(unpack)"\n");
