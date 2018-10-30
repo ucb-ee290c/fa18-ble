@@ -10,7 +10,7 @@ import freechips.rocketchip.subsystem.BaseSubsystem
 
 class PABundle extends Bundle {
 	val trigger = Input(Bool())
-	val data = Flipped(Decoupled(UInt(8.W)))
+	val data = Input(UInt(8.W))
 	val crc_seed = Input(UInt(24.W))
 	val white_seed = Input(UInt(7.W))
 	val done = Output(Bool())
@@ -92,7 +92,7 @@ class PacketAssembler extends Module {
 		}
 	}
 
-/*	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire() === true.B){//end of the packet
+/*	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire()){//end of the packet
 		io.in.bits.done := true.B	
 	}.otherwise{
 		io.in.bits.done := false.B
@@ -108,13 +108,13 @@ class PacketAssembler extends Module {
 			state := idle
 		}
 	}.elsewhen(state === preamble){
-		when(counter === 0.U && counter_byte === 7.U && io.out.fire() === true.B){//finish transmitting 1 byte of preamble
+		when(counter === 0.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 1 byte of preamble
 			state := aa
 			counter := 0.U
 			counter_byte := 0.U
 		}.otherwise{
 			state := preamble
-			when(io.out.fire() === true.B){
+			when(io.out.fire()){
 				when(counter_byte === 7.U){
 					counter := counter + 1.U
 					counter_byte := 0.U
@@ -124,13 +124,13 @@ class PacketAssembler extends Module {
 			}
 		}		
 	}.elsewhen(state === aa){
-		when(counter === 3.U && counter_byte === 7.U && io.out.fire() === true.B){//finish transmitting 4 bytes of access address
+		when(counter === 3.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 4 bytes of access address
 			state := pdu_header
 			counter := 0.U
 			counter_byte := 0.U
 		}.otherwise{
 			state := aa
-			when(io.out.fire() === true.B){
+			when(io.out.fire()){
 				when(counter_byte === 7.U){
 					counter := counter + 1.U
 					counter_byte := 0.U
@@ -140,13 +140,13 @@ class PacketAssembler extends Module {
 			}				
 		}			
 	}.elsewhen(state === pdu_header){
-		when(counter === 1.U && counter_byte === 7.U && io.out.fire() === true.B){//finish transmitting 2 bytes of pdu header
+		when(counter === 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 2 bytes of pdu header
 			state := pdu_payload
 			counter := 0.U
 			counter_byte := 0.U
 		}.otherwise{
 			state := pdu_header
-			when(io.out.fire() === true.B){
+			when(io.out.fire()){
 				when(counter_byte === 7.U){
 					counter := counter + 1.U
 					counter_byte := 0.U
@@ -156,13 +156,13 @@ class PacketAssembler extends Module {
 			}
 		}			
 	}.elsewhen(state === pdu_payload){
-		when(counter === pdu_length - 1.U && counter_byte === 7.U && io.out.fire() === true.B){//finish transmitting pdu payload
+		when(counter === pdu_length - 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting pdu payload
 			state := crc
 			counter := 0.U
 			counter_byte := 0.U
 		}.otherwise{
 			state := pdu_payload
-			when(io.out.fire() === true.B){
+			when(io.out.fire()){
 				when(counter_byte === 7.U){
 					counter := counter + 1.U
 					counter_byte := 0.U
@@ -172,13 +172,13 @@ class PacketAssembler extends Module {
 			}
 		}			
 	}.elsewhen(state === crc){
-		when(counter === 2.U && counter_byte === 7.U && io.out.fire() === true.B){//finish transmitting crc
+		when(counter === 2.U && counter_byte === 7.U && io.out.fire()){//finish transmitting crc
 			state := idle
 			counter := 0.U
 			counter_byte := 0.U
 		}.otherwise{
 			state := crc
-			when(io.out.fire() === true.B){
+			when(io.out.fire()){
 				when(counter_byte === 7.U){
 					counter := counter + 1.U
 					counter_byte := 0.U
@@ -201,17 +201,17 @@ class PacketAssembler extends Module {
 
 	//in_ready //note:check corner cases
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(state === pdu_payload && counter === pdu_length-1.U && counter_byte === 7.U && io.out.fire() === true.B){
+		when(state === pdu_payload && counter === pdu_length-1.U && counter_byte === 7.U && io.out.fire()){
 			in_ready := false.B//special case at the end of PAYLOAD		
-		}.elsewhen(counter_byte === 7.U && io.out.fire() === true.B){
+		}.elsewhen(counter_byte === 7.U && io.out.fire()){
 			in_ready := true.B
-		}.elsewhen(io.in.bits.data.fire() === true.B){
+		}.elsewhen(io.in.fire() === true.B){
 			in_ready := false.B		
 		}.otherwise{
 			//do nothing
 		}		
 	}.otherwise{//IDLE, PREAMBLE, CRC
-		when(state === preamble && counter === 0.U && counter_byte === 7.U && io.out.fire() === true.B){
+		when(state === preamble && counter === 0.U && counter_byte === 7.U && io.out.fire()){
 			in_ready := true.B//special case at the end of PREAMBLE: aa starts with ready
 		}.otherwise{
 			in_ready := false.B
@@ -222,34 +222,34 @@ class PacketAssembler extends Module {
 	when(state === idle){
 		out_valid := false.B
 	}.elsewhen(state === preamble){
-		when(counter === 0.U && counter_byte === 7.U && io.out.fire() === true.B){
+		when(counter === 0.U && counter_byte === 7.U && io.out.fire()){
 			out_valid := false.B//special case at the end of PREAMBLE: aa starts with invalid
 		}.otherwise{
 			out_valid := true.B
 		}
 	}.elsewhen(state === crc){
-		when(counter === 2.U && counter_byte === 7.U && io.out.fire() === true.B){
+		when(counter === 2.U && counter_byte === 7.U && io.out.fire()){
 			out_valid := false.B//special case at the end of CRC		
 		}.otherwise{
 			out_valid := true.B			
 		}
 	}.otherwise{//aa, pdu_header, pdu_payload
-		when(counter_byte === 7.U && io.out.fire() === true.B){
+		when(counter_byte === 7.U && io.out.fire()){
 			out_valid := false.B			
-		}.elsewhen(io.in.bits.data.fire() === true.B){
+		}.elsewhen(io.in.fire() === true.B){
 			out_valid := true.B				
 		}
 	}
 
 	//data
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(io.in.bits.data.fire()){
-			data := io.in.bits.data.bits			
+		when(io.in.fire()){
+			data := io.in.bits.data			
 		}.otherwise{
 			data := data
 		}
 	}.elsewhen(state === preamble){
-		when(io.in.bits.data.bits(0) === 0.U){//note: problems when not firing
+		when(io.in.bits.data(0) === 0.U){//note: problems when not firing
 			data := preamble0
 		}.otherwise{
 			data := preamble1
