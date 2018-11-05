@@ -117,13 +117,13 @@ class PacketAssembler extends Module {
 			io.out.bits := data(counter_byte)
 		}
 	}
-
+	
 	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire()){//end of the packet
 		io.in.done := true.B	
 	}.otherwise{
 		io.in.done := false.B
 	}
-
+	
 	//State Transition with counter updates
 	when(state === idle){
 		when(io.in.trigger === true.B){
