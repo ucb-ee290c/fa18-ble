@@ -53,10 +53,9 @@ int main(void)
   for (int i = 0; i < 4; i++ ){
     AA_eight = AA>>8*(3-i);
     reg_write64(CORDIC_WRITE, pack_PABundle(trigger, AA_eight, crc_seed, white_seed, done));
-    uint64_t unpack = reg_read64(CORDIC_READ);
-
-    printf("unpack data: %d", unpack_data(unpack)"\n");
-
+    while(reg_read64(CORDIC_READ)){
+    	printf("unpack data: %d", reg_read64(CORDIC_READ)"\n");
+    }
   }
 
 	return 0;
