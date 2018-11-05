@@ -9,11 +9,11 @@ import freechips.rocketchip.subsystem.BaseSubsystem
 
 
 class PABundle extends Bundle {
-	val trigger = Input(Bool())
-	val data = Input(UInt(8.W))
-	val crc_seed = Input(UInt(24.W))
-	val white_seed = Input(UInt(7.W))
-	val done = Output(Bool())
+	val trigger = Output(Bool())
+	val data = Decoupled(UInt(8.W))
+	val crc_seed = Output(UInt(24.W))
+	val white_seed = Output(UInt(7.W))
+	val done = Input(Bool())
 
 	override def cloneType: this.type = PABundle().asInstanceOf[this.type]
 }
@@ -22,7 +22,7 @@ object PABundle {
 }
 
 class PacketAssemblerIO extends Bundle {
-	val in = Flipped(Decoupled(PABundle()))
+	val in = Flipped(PABundle())
 	val out = Decoupled(UInt(1.W))
 
 	override def cloneType: this.type = PacketAssemblerIO().asInstanceOf[this.type]
@@ -41,6 +41,32 @@ trait HasPeripheryPA extends BaseSubsystem {
 }
 
 class PacketAssembler extends Module {
+
+	def stateUpdate(currentState: UInt, nextState: UInt, length: UInt, counter: UInt, counterByte: UInt, condition: Bool)= {
+		val stateOut = Wire(UInt(3.W))
+		val counterOut = Wire(UInt(8.W))
+		val counterByteOut = Wire(UInt(3.W))
+		counterOut := counter
+		counterByteOut := counterByte
+		
+		when(counter === length - 1.U && counterByte === 7.U && condition){
+			stateOut := nextState
+			counterOut := 0.U
+			counterByteOut := 0.U
+		}.otherwise{
+			stateOut := currentState
+			when(condition){
+				when(counterByte === 7.U){
+					counterOut := counter + 1.U
+					counterByteOut := 0.U
+				}.otherwise{
+					counterByteOut := counterByte + 1.U					
+				}
+			}
+		}				
+		(stateOut, counterOut, counterByteOut)
+	}
+
     val io = IO(new PacketAssemblerIO)
 
 	//state parameter
@@ -64,21 +90,21 @@ class PacketAssembler extends Module {
 	val data = RegInit(0.U(8.W))
 
 	//CRC
-	val crc_reset = io.in.bits.trigger
+	val crc_reset = io.in.trigger
 	val crc_data = Wire(UInt(1.W))
 	val crc_valid = Wire(Bool())
 	val crc_result = Wire(UInt(24.W))
-	val crc_seed = io.in.bits.crc_seed
+	val crc_seed = io.in.crc_seed
 
 	//whitening
-	val white_reset = io.in.bits.trigger
+	val white_reset = io.in.trigger
 	val white_data = Wire(UInt(1.W))
 	val white_valid = Wire(Bool())	
 	val white_result = Wire(UInt(1.W))
-	val white_seed = io.in.bits.white_seed			
+	val white_seed = io.in.white_seed			
 
 	//decouple assignments
-	io.in.ready := in_ready
+	io.in.data.ready := in_ready
 	io.out.valid := out_valid
 
 	//output bits
@@ -92,15 +118,15 @@ class PacketAssembler extends Module {
 		}
 	}
 
-/*	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire()){//end of the packet
-		io.in.bits.done := true.B	
+	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire()){//end of the packet
+		io.in.done := true.B	
 	}.otherwise{
-		io.in.bits.done := false.B
+		io.in.done := false.B
 	}
-*/
+
 	//State Transition with counter updates
 	when(state === idle){
-		when(io.in.bits.trigger === true.B){
+		when(io.in.trigger === true.B){
 			state := preamble
 			counter := 0.U
 			counter_byte := 0.U
@@ -108,6 +134,7 @@ class PacketAssembler extends Module {
 			state := idle
 		}
 	}.elsewhen(state === preamble){
+		/*
 		when(counter === 0.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 1 byte of preamble
 			state := aa
 			counter := 0.U
@@ -122,8 +149,15 @@ class PacketAssembler extends Module {
 					counter_byte := counter_byte + 1.U					
 				}
 			}
-		}		
+		}
+		*/
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(preamble, aa, 1.U, counter, counter_byte, io.out.fire())
+		state := stateOut
+		counter := counterOut
+		counter_byte := counterByteOut
+		
 	}.elsewhen(state === aa){
+		/*
 		when(counter === 3.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 4 bytes of access address
 			state := pdu_header
 			counter := 0.U
@@ -138,8 +172,14 @@ class PacketAssembler extends Module {
 					counter_byte := counter_byte + 1.U					
 				}
 			}				
-		}			
+		}
+		*/
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(aa, pdu_header, 4.U, counter, counter_byte, io.out.fire())
+		state := stateOut
+		counter := counterOut
+		counter_byte := counterByteOut			
 	}.elsewhen(state === pdu_header){
+		/*
 		when(counter === 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 2 bytes of pdu header
 			state := pdu_payload
 			counter := 0.U
@@ -154,8 +194,15 @@ class PacketAssembler extends Module {
 					counter_byte := counter_byte + 1.U					
 				}
 			}
-		}			
+		}
+		*/
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_header, pdu_payload, 2.U, counter, counter_byte, io.out.fire())
+		state := stateOut
+		counter := counterOut
+		counter_byte := counterByteOut
+					
 	}.elsewhen(state === pdu_payload){
+		/*
 		when(counter === pdu_length - 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting pdu payload
 			state := crc
 			counter := 0.U
@@ -170,8 +217,14 @@ class PacketAssembler extends Module {
 					counter_byte := counter_byte + 1.U					
 				}
 			}
-		}			
+		}
+		*/
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_payload, crc, pdu_length, counter, counter_byte, io.out.fire())
+		state := stateOut
+		counter := counterOut
+		counter_byte := counterByteOut			
 	}.elsewhen(state === crc){
+		/*
 		when(counter === 2.U && counter_byte === 7.U && io.out.fire()){//finish transmitting crc
 			state := idle
 			counter := 0.U
@@ -186,7 +239,12 @@ class PacketAssembler extends Module {
 					counter_byte := counter_byte + 1.U					
 				}
 			}
-		}		
+		}
+		*/
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(crc, idle, 3.U, counter, counter_byte, io.out.fire())
+		state := stateOut
+		counter := counterOut
+		counter_byte := counterByteOut		
 	}.otherwise{
 		state := idle//error
 	}
@@ -205,7 +263,7 @@ class PacketAssembler extends Module {
 			in_ready := false.B//special case at the end of PAYLOAD		
 		}.elsewhen(counter_byte === 7.U && io.out.fire()){
 			in_ready := true.B
-		}.elsewhen(io.in.fire() === true.B){
+		}.elsewhen(io.in.data.fire() === true.B){
 			in_ready := false.B		
 		}.otherwise{
 			//do nothing
@@ -236,20 +294,20 @@ class PacketAssembler extends Module {
 	}.otherwise{//aa, pdu_header, pdu_payload
 		when(counter_byte === 7.U && io.out.fire()){
 			out_valid := false.B			
-		}.elsewhen(io.in.fire() === true.B){
+		}.elsewhen(io.in.data.fire() === true.B){
 			out_valid := true.B				
 		}
 	}
 
 	//data
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(io.in.fire()){
-			data := io.in.bits.data			
+		when(io.in.data.fire()){
+			data := io.in.data.bits			
 		}.otherwise{
 			data := data
 		}
 	}.elsewhen(state === preamble){
-		when(io.in.bits.data(0) === 0.U){//note: problems when not firing
+		when(io.in.data.bits(0) === 0.U){//note: problems when not firing
 			data := preamble0
 		}.otherwise{
 			data := preamble1

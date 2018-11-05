@@ -9,7 +9,7 @@ import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
 class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //IO reference
     /*val in.trigger = Input(Bool())
-    val in.data = Flipped(Decoupled(UInt(8.W)))//decouple(sink): data, pop, empty
+    val in.data.bits = Flipped(Decoupled(UInt(8.W)))//decouple(sink): data, pop, empty
     val REG_CRC_Seed_i = Input(UInt(24.W))
     val REG_White_Seed_i = Input(UInt(7.W))
 
@@ -44,24 +44,24 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 	//reset(3)
 
 //throughout packet
-	poke(c.io.in.bits.crc_seed,"b010101010101010101010101".U)
-	poke(c.io.in.bits.white_seed,"b1100101".U)
+	poke(c.io.in.crc_seed,"b010101010101010101010101".U)
+	poke(c.io.in.white_seed,"b1100101".U)
 
 //initialize
-	poke(c.io.in.bits.trigger,false.B)
-	poke(c.io.in.valid,false.B)
-	poke(c.io.in.bits.data,0.U)
+	poke(c.io.in.trigger,false.B)
+	poke(c.io.in.data.valid,false.B)
+	poke(c.io.in.data.bits,0.U)
 	poke(c.io.out.ready,false.B)
 
 	step(2)
 
 //trigger
-	poke(c.io.in.bits.trigger,true.B)
-	poke(c.io.in.valid,true.B)
-	poke(c.io.in.bits.data, wholepacket_dig_rev(7,0))
+	poke(c.io.in.trigger,true.B)
+	poke(c.io.in.data.valid,true.B)
+	poke(c.io.in.data.bits, wholepacket_dig_rev(7,0))
 
 	step(1)
-	poke(c.io.in.bits.trigger,false.B)
+	poke(c.io.in.trigger,false.B)
 
 //PREAMBLE
 	var j:Int = 0
@@ -80,10 +80,10 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //AA
 	for(j<-0 to 31){
 		if(j%8==0){
-			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.in.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		//println(s"${(j/8)*8}")
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
@@ -99,10 +99,10 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //PDU_HEADER
 	for(j<-32 to 47){
 		if(j%8==0){
-			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.in.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
@@ -118,10 +118,10 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //PDU_PAYLOAD
 	for(j<-48 to 22*8-1){
 		if(j%8==0){
-			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.valid,true.B)
+			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.data.valid,true.B)
 		}else{
-			poke(c.io.in.valid,false.B)			
+			poke(c.io.in.data.valid,false.B)			
 		}
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
@@ -143,13 +143,13 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
  		poke(c.io.out.ready,false.B)//need to test two ready consequently		
 	}
 	j=22
-	//poke(c.io.in.bits.data,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
 	poke(c.io.out.ready,true.B)
    	expect(c.io.out.bits, CRC_rad_rev(j))//note
 
 	j=23
-	//poke(c.io.in.bits.data,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
 	poke(c.io.out.ready,true.B)
    	expect(c.io.out.bits, CRC_rad_rev(j))//note
