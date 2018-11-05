@@ -134,113 +134,26 @@ class PacketAssembler extends Module {
 			state := idle
 		}
 	}.elsewhen(state === preamble){
-		/*
-		when(counter === 0.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 1 byte of preamble
-			state := aa
-			counter := 0.U
-			counter_byte := 0.U
-		}.otherwise{
-			state := preamble
-			when(io.out.fire()){
-				when(counter_byte === 7.U){
-					counter := counter + 1.U
-					counter_byte := 0.U
-				}.otherwise{
-					counter_byte := counter_byte + 1.U					
-				}
-			}
-		}
-		*/
 		val (stateOut, counterOut, counterByteOut) = stateUpdate(preamble, aa, 1.U, counter, counter_byte, io.out.fire())
 		state := stateOut
 		counter := counterOut
-		counter_byte := counterByteOut
-		
+		counter_byte := counterByteOut		
 	}.elsewhen(state === aa){
-		/*
-		when(counter === 3.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 4 bytes of access address
-			state := pdu_header
-			counter := 0.U
-			counter_byte := 0.U
-		}.otherwise{
-			state := aa
-			when(io.out.fire()){
-				when(counter_byte === 7.U){
-					counter := counter + 1.U
-					counter_byte := 0.U
-				}.otherwise{
-					counter_byte := counter_byte + 1.U					
-				}
-			}				
-		}
-		*/
 		val (stateOut, counterOut, counterByteOut) = stateUpdate(aa, pdu_header, 4.U, counter, counter_byte, io.out.fire())
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut			
 	}.elsewhen(state === pdu_header){
-		/*
-		when(counter === 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting 2 bytes of pdu header
-			state := pdu_payload
-			counter := 0.U
-			counter_byte := 0.U
-		}.otherwise{
-			state := pdu_header
-			when(io.out.fire()){
-				when(counter_byte === 7.U){
-					counter := counter + 1.U
-					counter_byte := 0.U
-				}.otherwise{
-					counter_byte := counter_byte + 1.U					
-				}
-			}
-		}
-		*/
 		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_header, pdu_payload, 2.U, counter, counter_byte, io.out.fire())
 		state := stateOut
 		counter := counterOut
-		counter_byte := counterByteOut
-					
+		counter_byte := counterByteOut					
 	}.elsewhen(state === pdu_payload){
-		/*
-		when(counter === pdu_length - 1.U && counter_byte === 7.U && io.out.fire()){//finish transmitting pdu payload
-			state := crc
-			counter := 0.U
-			counter_byte := 0.U
-		}.otherwise{
-			state := pdu_payload
-			when(io.out.fire()){
-				when(counter_byte === 7.U){
-					counter := counter + 1.U
-					counter_byte := 0.U
-				}.otherwise{
-					counter_byte := counter_byte + 1.U					
-				}
-			}
-		}
-		*/
 		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_payload, crc, pdu_length, counter, counter_byte, io.out.fire())
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut			
 	}.elsewhen(state === crc){
-		/*
-		when(counter === 2.U && counter_byte === 7.U && io.out.fire()){//finish transmitting crc
-			state := idle
-			counter := 0.U
-			counter_byte := 0.U
-		}.otherwise{
-			state := crc
-			when(io.out.fire()){
-				when(counter_byte === 7.U){
-					counter := counter + 1.U
-					counter_byte := 0.U
-				}.otherwise{
-					counter_byte := counter_byte + 1.U					
-				}
-			}
-		}
-		*/
 		val (stateOut, counterOut, counterByteOut) = stateUpdate(crc, idle, 3.U, counter, counter_byte, io.out.fire())
 		state := stateOut
 		counter := counterOut
