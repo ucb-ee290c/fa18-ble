@@ -34,6 +34,7 @@ int main(void)
 
   uint8_t data_eight;
   uint8_t PA_out;
+  int j=0;
   for (int i = 0; i < 22; i++ ){
     if (i>=0 && i<4) {
 	data_eight = data_AA>>8*i;
@@ -58,10 +59,7 @@ int main(void)
     }
     //printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
     reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight)); 
-    }
-    return 0;
-   int j=0;
-   while (j<176) {
+    if (j<176 && reg_read64(CORDIC_READ)) {
 	PA_out = reg_read64(CORDIC_READ);
 	if (PA_out %2 == 0) {
 		printf("unpack data: %d", PA_out >> 1);
@@ -70,7 +68,7 @@ int main(void)
         }
         j++;
     }
-  
-
-	return 0;
+   }
+    return 0;
+   
 }
