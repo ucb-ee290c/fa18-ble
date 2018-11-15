@@ -92,8 +92,8 @@ class PacketAssembler extends Module {
 	val pdu_length = RegInit(0.U(8.W))
 
 	//Preamble
-	val preamble0 = "b10101010".U
-	val preamble1 = "b01010101".U
+	val preamble0 = "b01010101".U
+	val preamble1 = "b10101010".U
 
 	//Handshake parameters
 	val in_ready = RegInit(false.B)
@@ -237,7 +237,7 @@ class PacketAssembler extends Module {
 		}
 	}.elsewhen(state === preamble){
 		when(io.in.bits.data(0) === 0.U){//note: problems when not firing
-			data := preamble0
+			data := preamble0 // 	val preamble0 = "b10101010".U
 		}.otherwise{
 			data := preamble1
 		}
