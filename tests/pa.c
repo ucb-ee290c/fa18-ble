@@ -39,9 +39,9 @@ int main(void)
     if (i>=0 && i<4) {
 	data_eight = data_AA>>8*i;
         if (i==0) {
-            //printf("pack data: %#010x \n", pack_PABundle(1, 0x00));
-            //printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
+            printf("pack data: %#010x \n", pack_PABundle(1, 0x00));
             reg_write64(CORDIC_WRITE, pack_PABundle(1, 0x00));
+            printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
             reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
         }
     }
@@ -57,18 +57,20 @@ int main(void)
     if (i>=20 && i<22) {
 	data_eight = data_pduData2>>8*(i-20);
     }
-    //printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
-    reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight)); 
-    if (j<176 && reg_read64(CORDIC_READ)) {
+    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
+    reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
+  }
+//    return 0;
+
+    while (j<176) {
 	PA_out = reg_read64(CORDIC_READ);
 	if (PA_out %2 == 0) {
-		printf("unpack data: %d", PA_out >> 1);
+		printf("%d", PA_out >> 1);
         } else {
 		printf("\n");
         }
         j++;
     }
-   }
     return 0;
    
 }

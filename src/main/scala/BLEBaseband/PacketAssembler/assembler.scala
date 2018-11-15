@@ -92,12 +92,14 @@ class PacketAssembler extends Module {
 	val pdu_length = RegInit(0.U(8.W))
 
 	//Preamble
-	val preamble0 = "b01010101".U
-	val preamble1 = "b10101010".U
+	val preamble0 = "b10101010".U //flipped preamble; start with least significant bit
+	val preamble1 = "b01010101".U
 
 	//Handshake parameters
 	val in_ready = RegInit(false.B)
 	val out_valid = RegInit(false.B)
+	val in_fire = io.in.ready && io.in.valid
+	val out_fire = io.out.ready && io.out.valid
 
 	//data registers
 	val data = RegInit(0.U(8.W))
@@ -134,7 +136,7 @@ class PacketAssembler extends Module {
 		}
 	}
 	
-	when(state === crc && counter === 2.U && counter_byte === 7.U && io.out.fire()){//end of the packet
+	when(state === crc && counter === 2.U && counter_byte === 7.U && out_fire){//end of the packet
 		io.out.bits.done := true.B	
 	}.otherwise{
 		io.out.bits.done := false.B
@@ -150,27 +152,27 @@ class PacketAssembler extends Module {
 			state := idle
 		}
 	}.elsewhen(state === preamble){
-		val (stateOut, counterOut, counterByteOut) = stateUpdate(preamble, aa, 1.U, counter, counter_byte, io.out.fire())
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(preamble, aa, 1.U, counter, counter_byte, out_fire)
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut		
 	}.elsewhen(state === aa){
-		val (stateOut, counterOut, counterByteOut) = stateUpdate(aa, pdu_header, 4.U, counter, counter_byte, io.out.fire())
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(aa, pdu_header, 4.U, counter, counter_byte, out_fire)
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut			
 	}.elsewhen(state === pdu_header){
-		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_header, pdu_payload, 2.U, counter, counter_byte, io.out.fire())
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_header, pdu_payload, 2.U, counter, counter_byte, out_fire)
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut					
 	}.elsewhen(state === pdu_payload){
-		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_payload, crc, pdu_length, counter, counter_byte, io.out.fire())
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(pdu_payload, crc, pdu_length, counter, counter_byte, out_fire)
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut			
 	}.elsewhen(state === crc){
-		val (stateOut, counterOut, counterByteOut) = stateUpdate(crc, idle, 3.U, counter, counter_byte, io.out.fire())
+		val (stateOut, counterOut, counterByteOut) = stateUpdate(crc, idle, 3.U, counter, counter_byte, out_fire)
 		state := stateOut
 		counter := counterOut
 		counter_byte := counterByteOut		
@@ -188,18 +190,20 @@ class PacketAssembler extends Module {
 
 	//in_ready //note:check corner cases
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(state === pdu_payload && counter === pdu_length-1.U && counter_byte === 7.U && io.out.fire()){
+		when(state === pdu_payload && counter === pdu_length-1.U && counter_byte === 7.U && out_fire){
 			in_ready := false.B//special case at the end of PAYLOAD		
-		}.elsewhen(counter_byte === 7.U && io.out.fire()){
+		}.elsewhen(counter_byte === 7.U && out_fire){
 			in_ready := true.B
-		}.elsewhen(io.in.fire() === true.B){
+		}.elsewhen(in_fire === 1.U){
 			in_ready := false.B		
 		}.otherwise{
-			//do nothing
+			
 		}		
 	}.otherwise{//IDLE, PREAMBLE, CRC
-		when(state === preamble && counter === 0.U && counter_byte === 7.U && io.out.fire()){
+		when(state === preamble && counter === 0.U && counter_byte === 7.U && out_fire){
 			in_ready := true.B//special case at the end of PREAMBLE: aa starts with ready
+		}.elsewhen(state === idle){
+			in_ready := true.B
 		}.otherwise{
 			in_ready := false.B
 		}
@@ -209,35 +213,35 @@ class PacketAssembler extends Module {
 	when(state === idle){
 		out_valid := false.B
 	}.elsewhen(state === preamble){
-		when(counter === 0.U && counter_byte === 7.U && io.out.fire()){
+		when(counter === 0.U && counter_byte === 7.U && out_fire){
 			out_valid := false.B//special case at the end of PREAMBLE: aa starts with invalid
 		}.otherwise{
 			out_valid := true.B
 		}
 	}.elsewhen(state === crc){
-		when(counter === 2.U && counter_byte === 7.U && io.out.fire()){
+		when(counter === 2.U && counter_byte === 7.U && out_fire){
 			out_valid := false.B//special case at the end of CRC		
 		}.otherwise{
 			out_valid := true.B			
 		}
 	}.otherwise{//aa, pdu_header, pdu_payload
-		when(counter_byte === 7.U && io.out.fire()){
+		when(counter_byte === 7.U && out_fire){
 			out_valid := false.B			
-		}.elsewhen(io.in.fire() === true.B){
+		}.elsewhen(in_fire === 1.U){
 			out_valid := true.B				
 		}
 	}
 
 	//data
 	when(state === aa || state === pdu_header || state === pdu_payload){
-		when(io.in.fire()){
+		when(in_fire){
 			data := io.in.bits.data			
 		}.otherwise{
 			data := data
 		}
 	}.elsewhen(state === preamble){
 		when(io.in.bits.data(0) === 0.U){//note: problems when not firing
-			data := preamble0 // 	val preamble0 = "b10101010".U
+			data := preamble0
 		}.otherwise{
 			data := preamble1
 		}
@@ -258,7 +262,7 @@ class PacketAssembler extends Module {
 	//Set CRC Parameters 
 	when(state === pdu_header || state === pdu_payload){
 		crc_data := data(counter_byte)
-		crc_valid := io.out.fire()
+		crc_valid := out_fire
 	}.otherwise{
 		crc_data := 0.U
 		crc_valid := false.B
@@ -267,7 +271,7 @@ class PacketAssembler extends Module {
 	//Set Whitening Parameters
 	when(state === pdu_header || state === pdu_payload || state === crc){	
 		white_data  := data(counter_byte)//note
-		white_valid := io.out.fire()
+		white_valid := out_fire
 	}.otherwise{
 		white_data  := 0.U
 		white_valid := false.B

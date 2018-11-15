@@ -84,12 +84,12 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 		}else{
 			poke(c.io.in.valid,false.B)			
 		}
-		println(s"${(j/8)*8}")
+		//println(s"${(j/8)*8}")
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
 		poke(c.io.out.ready,true.B)
    		expect(c.io.out.bits.data, wholepacket_rad_rev(j))//note
-   		println(s"j="+j+s"\n${peek(c.io.out.bits.data)}\t${peek(wholepacket_rad_rev(j))}")
+   		//println(s"j="+j+s"\n${peek(c.io.out.bits.data)}\t${peek(wholepacket_rad_rev(j))}")
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
