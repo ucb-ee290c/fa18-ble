@@ -9,7 +9,7 @@
 #include "mmio.h"
 
 
-uint64_t pack_PABundle(uint64_t trigger, uint64_t data) {
+uint16_t pack_PABundle(uint8_t trigger, uint8_t data) {
   return (trigger << 8)|data;
 }
 
@@ -38,6 +38,8 @@ int main(void)
     if (i>=0 && i<4) {
 	data_eight = data_AA>>8*i;
         if (i==0) {
+            //printf("pack data: %#010x \n", pack_PABundle(1, 0x00));
+            //printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
             reg_write64(CORDIC_WRITE, pack_PABundle(1, 0x00));
             reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
         }
@@ -54,8 +56,10 @@ int main(void)
     if (i>=20 && i<22) {
 	data_eight = data_pduData2>>8*(i-20);
     }
+    //printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
     reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight)); 
     }
+    return 0;
    int j=0;
    while (j<176) {
 	PA_out = reg_read64(CORDIC_READ);
