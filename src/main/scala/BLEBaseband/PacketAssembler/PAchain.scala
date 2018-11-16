@@ -142,9 +142,9 @@ abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends
 
     //unpack and pack
     val packet = Module(new PacketAssembler())
-    packet.io.in := in.bits.data.asTypeOf(new PABundle())
-    packet.io.in.data.valid := in.valid
-    in.ready := packet.io.in.data.ready
+    packet.io.in.bits := in.bits.data.asTypeOf(new PAInputBundle())
+    packet.io.in.valid := in.valid
+    in.ready := packet.io.in.ready
 
     out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready
@@ -159,12 +159,13 @@ class TLPABlock(implicit p: Parameters)extends
 
 class PAThing
 (
-  val depth: Int = 8,
+  val depthWrite: Int = 32,
+  val depthRead : Int = 256
 )(implicit p: Parameters) extends LazyModule {
   // instantiate lazy modules
-  val writeQueue = LazyModule(new TLWriteQueue(depth))
+  val writeQueue = LazyModule(new TLWriteQueue(depthWrite))
   val packet = LazyModule(new TLPABlock())
-  val readQueue = LazyModule(new TLReadQueue(depth))
+  val readQueue = LazyModule(new TLReadQueue(depthRead))
 
   // connect streamNodes of queues and cordic
   readQueue.streamNode := packet.streamNode := writeQueue.streamNode

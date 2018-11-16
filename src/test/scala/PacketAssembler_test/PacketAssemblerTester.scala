@@ -44,24 +44,23 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 	//reset(3)
 
 //throughout packet
-	poke(c.io.in.crc_seed,"b010101010101010101010101".U)
-	poke(c.io.in.white_seed,"b1100101".U)
+	//poke(c.io.in.crc_seed,"b010101010101010101010101".U)
+	//poke(c.io.in.white_seed,"b1100101".U)
 
 //initialize
-	poke(c.io.in.trigger,false.B)
-	poke(c.io.in.data.valid,false.B)
-	poke(c.io.in.data.bits,0.U)
+	poke(c.io.in.bits.trigger,false.B)
+	poke(c.io.in.valid,false.B)
+	poke(c.io.in.bits.data,0.U)
 	poke(c.io.out.ready,false.B)
 
 	step(2)
 
 //trigger
-	poke(c.io.in.trigger,true.B)
-	poke(c.io.in.data.valid,true.B)
-	poke(c.io.in.data.bits, wholepacket_dig_rev(7,0))
-
+	poke(c.io.in.bits.trigger,true.B)
+	poke(c.io.in.valid,true.B)
+	poke(c.io.in.bits.data, wholepacket_dig_rev(7,0))
 	step(1)
-	poke(c.io.in.trigger,false.B)
+	poke(c.io.in.bits.trigger,false.B)
 
 //PREAMBLE
 	var j:Int = 0
@@ -69,8 +68,8 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 		//step(Random_Num(1,100))
 		step(5)
 		poke(c.io.out.ready,true.B)
-   		expect(c.io.out.bits, preamble_rev(j))//note: U to B
-   		//println(s"${peek(c.io.out.bits)}")
+   		expect(c.io.out.bits.data, preamble_rev(j))//note: U to B
+   		//println(s"${peek(c.io.out.bits.data)}")
    		//println(s"${peek(preamble_rev(j))}")
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready  				
@@ -80,17 +79,17 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //AA
 	for(j<-0 to 31){
 		if(j%8==0){
-			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.data.valid,true.B)
+			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.valid,true.B)
 		}else{
-			poke(c.io.in.data.valid,false.B)			
+			poke(c.io.in.valid,false.B)			
 		}
 		//println(s"${(j/8)*8}")
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
 		poke(c.io.out.ready,true.B)
-   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
-   		//println(s"j="+j+s"\n${peek(c.io.out.bits)}\t${peek(wholepacket_rad_rev(j))}")
+   		expect(c.io.out.bits.data, wholepacket_rad_rev(j))//note
+   		//println(s"j="+j+s"\n${peek(c.io.out.bits.data)}\t${peek(wholepacket_rad_rev(j))}")
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
@@ -99,17 +98,17 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //PDU_HEADER
 	for(j<-32 to 47){
 		if(j%8==0){
-			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.data.valid,true.B)
+			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.valid,true.B)
 		}else{
-			poke(c.io.in.data.valid,false.B)			
+			poke(c.io.in.valid,false.B)			
 		}
 		
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
 		poke(c.io.out.ready,true.B)
-   		//println(s"j="+j+s"\n${peek(c.io.out.bits)}\t${peek(wholepacket_rad_rev(j))}")		
-   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
+   		//println(s"j="+j+s"\n${peek(c.io.out.bits.data)}\t${peek(wholepacket_rad_rev(j))}")		
+   		expect(c.io.out.bits.data, wholepacket_rad_rev(j))//note
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready  				
 	}
@@ -118,15 +117,15 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 //PDU_PAYLOAD
 	for(j<-48 to 22*8-1){
 		if(j%8==0){
-			poke(c.io.in.data.bits,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
-			poke(c.io.in.data.valid,true.B)
+			poke(c.io.in.bits.data,wholepacket_dig_rev((j/8)*8+7,(j/8)*8))
+			poke(c.io.in.valid,true.B)
 		}else{
-			poke(c.io.in.data.valid,false.B)			
+			poke(c.io.in.valid,false.B)			
 		}
 		//step(Random_Num(2,100))//minimun for DMA_fire: 2
 		step(5)
 		poke(c.io.out.ready,true.B)
-   		expect(c.io.out.bits, wholepacket_rad_rev(j))//note
+   		expect(c.io.out.bits.data, wholepacket_rad_rev(j))//note
 
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready  				
@@ -138,23 +137,23 @@ class PacketAssemblerTest(c: PacketAssembler) extends PeekPokeTester(c) {
 		//step(Random_Num(1,100))
 		step(5)
 		poke(c.io.out.ready,true.B)
-   		expect(c.io.out.bits, CRC_rad_rev(j))//note
+   		expect(c.io.out.bits.data, CRC_rad_rev(j))//note
    		step(1)
  		poke(c.io.out.ready,false.B)//need to test two ready consequently		
 	}
 	j=22
-	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.bits.data,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
 	poke(c.io.out.ready,true.B)
-   	expect(c.io.out.bits, CRC_rad_rev(j))//note
+   	expect(c.io.out.bits.data, CRC_rad_rev(j))//note
 
 	j=23
-	//poke(c.io.in.data.bits,CRC((j/8)*8+7,(j/8)*8))
+	//poke(c.io.in.bits.data,CRC((j/8)*8+7,(j/8)*8))
 	step(1)
 	poke(c.io.out.ready,true.B)
-   	expect(c.io.out.bits, CRC_rad_rev(j))//note
+   	expect(c.io.out.bits.data, CRC_rad_rev(j))//note
 
-	//expect(c.io.in.done, true.B)//note	
+	expect(c.io.out.bits.done, true.B)//note	
 
 
 
