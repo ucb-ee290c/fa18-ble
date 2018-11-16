@@ -29,7 +29,7 @@ abstract class WriteQueue
     // get the output bundle associated with the AXI4Stream node
     val out = streamNode.out(0)._1
     // width (in bits) of the output interface
-    val width = 9
+    val width = 64
     // instantiate a queue
     val queue = Module(new Queue(UInt(width.W), depth))
     // connect queue output to streaming output
@@ -86,7 +86,7 @@ abstract class ReadQueue
     // get the input bundle associated with the AXI4Stream node
     val in = streamNode.in(0)._1
     // width (in bits) of the input interface
-    val width = 2
+    val width = 64
     // instantiate a queue
     val queue = Module(new Queue(UInt(width.W), depth))
     // connect queue output to streaming output
