@@ -74,11 +74,11 @@ class PacketDisAssembler extends Module {
 //testing assignments
 io.data.bits := 0.U
 io.data.valid := true.B
-io.out.length.bits := 0.U
+io.out.bits.length := 0.U
 io.out.length.valid := true.B
-io.out.flag_aa.bits := true.B
+io.out.bits.flag_aa := true.B
 io.out.flag_aa.valid := true.B
-io.out.flag_crc.bits := true.B
+io.out.bits.flag_crc := true.B
 io.out.flag_crc.valid := true.B
 io.data.ready := true.B
 */
@@ -181,16 +181,16 @@ io.data.ready := true.B
 
   //output function
   when(state_r === idle || state_r === preamble){
-    io.out.data.bits := 0.U
+    io.out.bits.data := 0.U
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    io.out.data.bits := data_r 
+    io.out.bits.data := data_r 
   }
 
-  io.out.length.bits := PDU_Length_r
+  io.out.bits.length := PDU_Length_r
   io.out.length.valid := PDU_Length_Valid_r
-  io.out.flag_aa.bits := flag_aa_r
+  io.out.bits.flag_aa := flag_aa_r
   io.out.flag_aa.valid := flag_aa_valid_r
-  io.out.flag_crc.bits := flag_crc_r
+  io.out.bits.flag_crc := flag_crc_r
   io.out.flag_crc.valid := flag_crc_valid_r
 
   io.out.data.valid := dma_data_valid_r
@@ -415,7 +415,7 @@ io.data.ready := true.B
   }.elsewhen(state_r === preamble){
     when(afifo_fire_w === true.B){
       //data_w(7) := io.data.bits.toBools //note: subword assignment
-      when(io.in.data.bits===0.U){
+      when(io.in.bits.data===0.U){
         data_w(7) := false.B
       }.otherwise{
         data_w(7) := true.B
@@ -432,7 +432,7 @@ io.data.ready := true.B
   }.elsewhen(state_r === aa){
     when(afifo_fire_w === true.B){
       //data_w(counter_byte_r) := io.data.bits.toBools
-      when(io.in.data.bits===0.U){
+      when(io.in.bits.data===0.U){
         data_w(counter_byte_r) := false.B
       }.otherwise{
         data_w(counter_byte_r) := true.B
@@ -457,7 +457,7 @@ io.data.ready := true.B
   //dewhitening
   dewhite_Reset_w := (state_r === idle)
   when(state_r === pdu_header || state_r === pdu_payload || state_r === crc){//check corner cases  
-    dewhite_Data_w  := io.in.data.bits
+    dewhite_Data_w  := io.in.bits.data
     dewhite_Valid_w := afifo_fire_w
   }.otherwise{
     dewhite_Data_w  := 0.U
