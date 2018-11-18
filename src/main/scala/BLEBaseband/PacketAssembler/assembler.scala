@@ -241,7 +241,7 @@ class PacketAssembler extends Module {
 		}
 	}.elsewhen(state === preamble){
 		when(io.in.valid){
-			when(io.in.bits.data(0) === 0.U){//note: problems when not firing
+			when(io.in.bits.data(0) === 0.U){
 				data := preamble0
 			}.otherwise{
 				data := preamble1
@@ -273,8 +273,11 @@ class PacketAssembler extends Module {
 	}
 
 	//Set Whitening Parameters
-	when(state === pdu_header || state === pdu_payload || state === crc){	
+	when(state === pdu_header || state === pdu_payload){	
 		white_data  := data(counter_byte)//note
+		white_valid := out_fire
+	}.elsewhen(state === crc){
+		white_data := crc_result(counter * 8.U + counter_byte)
 		white_valid := out_fire
 	}.otherwise{
 		white_data  := 0.U
