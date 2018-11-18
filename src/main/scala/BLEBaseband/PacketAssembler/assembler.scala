@@ -144,7 +144,7 @@ class PacketAssembler extends Module {
 	
 	//State Transition with counter updates
 	when(state === idle){
-		when(io.in.bits.trigger === true.B){
+		when(io.in.bits.trigger === true.B && io.in.valid){
 			state := preamble
 			counter := 0.U
 			counter_byte := 0.U
@@ -240,10 +240,14 @@ class PacketAssembler extends Module {
 			data := data
 		}
 	}.elsewhen(state === preamble){
-		when(io.in.bits.data(0) === 0.U){//note: problems when not firing
-			data := preamble0
+		when(io.in.valid){
+			when(io.in.bits.data(0) === 0.U){//note: problems when not firing
+				data := preamble0
+			}.otherwise{
+				data := preamble1
+			}
 		}.otherwise{
-			data := preamble1
+			data := data
 		}
 	}.elsewhen(state === crc){
 		when(counter === 0.U){
