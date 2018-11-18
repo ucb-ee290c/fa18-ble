@@ -13,7 +13,6 @@ class PAInputBundle extends Bundle {
 	val data = Output(UInt(8.W))
 	//val crc_seed = Output(UInt(24.W))
 	//val white_seed = Output(UInt(7.W))
-	//val done = Input(Bool())
 
 	override def cloneType: this.type = PAInputBundle().asInstanceOf[this.type]
 }
@@ -105,21 +104,22 @@ class PacketAssembler extends Module {
 	val data = RegInit(0.U(8.W))
 
 	//CRC
-	val crc_reset = io.in.bits.trigger
+	val crc_reset = io.in.bits.trigger && io.in.valid
 	val crc_data = Wire(UInt(1.W))
 	val crc_valid = Wire(Bool())
 	val crc_result = Wire(UInt(24.W))
-	//val crc_seed = io.in.crc_seed
-	val crc_seed = "b010101010101010101010101".U
-
+	val crc_seed = Wire(UInt(24.W))
 
 	//whitening
-	val white_reset = io.in.bits.trigger
+	val white_reset = io.in.bits.trigger && io.in.valid
 	val white_data = Wire(UInt(1.W))
 	val white_valid = Wire(Bool())	
 	val white_result = Wire(UInt(1.W))
-	//val white_seed = io.in.white_seed
-	val white_seed = "b1100101".U			
+	val white_seed = Wire(UInt(7.W))
+	
+	//hardcode seed initiation 
+	crc_seed := "b010101010101010101010101".U
+	white_seed := "b1100101".U			
 
 	//decouple assignments
 	io.in.ready := in_ready
@@ -215,7 +215,7 @@ class PacketAssembler extends Module {
 	}.elsewhen(state === preamble){
 		when(counter === 0.U && counter_byte === 7.U && out_fire){
 			out_valid := false.B//special case at the end of PREAMBLE: aa starts with invalid
-		}.otherwise{
+		}.elsewhen(io.in.valid){
 			out_valid := true.B
 		}
 	}.elsewhen(state === crc){

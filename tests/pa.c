@@ -31,38 +31,49 @@ int main(void)
   //uint64_t white_seed = 1100101;
   uint64_t done = 0;
   //uint64_t preamble = 01010101;
-
   uint8_t data_eight;
   uint8_t PA_out;
   int j=0;
-  for (int i = 0; i < 22; i++ ){
+  for (int i = 0; i < 22; i++){
     if (i>=0 && i<4) {
-	data_eight = data_AA>>8*i;
+	    data_eight = data_AA>>8*i;
         if (i==0) {
-            printf("pack data: %#010x \n", pack_PABundle(1, 0x00));
-            reg_write64(CORDIC_WRITE, pack_PABundle(1, 0x00));
+            printf("pack data: %#010x \n", pack_PABundle(1, data_eight));
+            reg_write64(CORDIC_WRITE, pack_PABundle(1, data_eight));
             printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
             reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
         }
+        else {
+            printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
+            reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
+        }
     }
+    
     if (i>=4 && i<6) {
 	data_eight = data_pduH>>8*(i-4);
+    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));    
     }
     if (i>=6 && i<12) {
 	data_eight = data_pduAA>>8*(i-6);
+    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
     }
     if (i>=12 && i<20) {
-        data_eight = data_pduData1>>8*(i-12);
+    data_eight = data_pduData1>>8*(i-12);
+    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
     }
     if (i>=20 && i<22) {
 	data_eight = data_pduData2>>8*(i-20);
-    }
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
+    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
     reg_write64(CORDIC_WRITE, pack_PABundle(0, data_eight));
+    }
+    
   }
-//    return 0;
 
-    while (j<176) {
+
+    while (j<256) {
 	PA_out = reg_read64(CORDIC_READ);
 	if (PA_out %2 == 0) {
 		printf("%d", PA_out >> 1);
