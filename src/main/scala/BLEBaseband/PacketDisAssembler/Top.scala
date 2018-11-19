@@ -1,5 +1,6 @@
-package PacketAssembler
+package PacketDisAssembler
 
+import PacketDisAssembler._
 import freechips.rocketchip.config.Parameters
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.subsystem._
@@ -19,7 +20,7 @@ class ExampleTopModule[+L <: ExampleTop](l: L) extends RocketSubsystemModuleImp(
     with HasExtInterruptsModuleImp
     with DontTouch
 
-class ExampleTopWithPA(implicit p: Parameters) extends ExampleTop
-    with HasPeripheryPA {
+class ExampleTopWithPDA(implicit p: Parameters) extends ExampleTop
+    with HasPeripheryPDA {
   override lazy val module = new ExampleTopModule(this)
 }

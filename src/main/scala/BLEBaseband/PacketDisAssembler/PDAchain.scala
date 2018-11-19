@@ -163,7 +163,7 @@ class PDAThing
 )(implicit p: Parameters) extends LazyModule {
   // instantiate lazy modules
   val writeQueue = LazyModule(new TLWriteQueue(depth))
-  val packet = LazyModule(new TLPABlock())
+  val packet = LazyModule(new TLPDABlock())
   val readQueue = LazyModule(new TLReadQueue(depth))
 
   // connect streamNodes of queues and cordic
