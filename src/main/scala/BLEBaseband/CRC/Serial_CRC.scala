@@ -60,8 +60,8 @@ endmodule // crc
 
 class Serial_CRC extends Module {
     val io      = IO(new Bundle {
-    val operand  = new DecoupledIO(UInt(1.W)).flip()
-    val result   = new DecoupledIO(UInt(24.W))
+    val operand  = Flipped(Decoupled(UInt(1.W)))
+    val result   = Decoupled(UInt(24.W))
 
    	val seed       = Input(UInt(24.W))
     val init       = Input(Bool())        // to init the seed
@@ -79,12 +79,12 @@ class Serial_CRC extends Module {
 
 
     //val output_bit_reg = Reg(init = 0.U(1.W))
-    val output_valid_reg = Reg(Bool())
+    val output_valid = Reg(Bool())
 
     when (io.init === true.B) { 
         lfsr := Reverse(io.seed)
         //output_bit_reg := 0.U
-        output_valid_reg := true.B
+        output_valid := true.B
         io.operand.ready := true.B
 
     } .elsewhen (io.operand.valid === true.B) {
@@ -96,16 +96,16 @@ class Serial_CRC extends Module {
         lfsr(7), lfsr(6),lfsr(5),lfsr(4),lfsr(3),lfsr(2),lfsr(1))
 
     	//output_bit_reg := inv
-     	output_valid_reg := true.B
+     	output_valid := true.B
      	io.operand.ready := true.B
         
     } .otherwise {
         lfsr := lfsr
-        output_valid_reg := true.B
+        output_valid := true.B
         io.operand.ready := true.B
     }
 
-	io.result.valid := output_valid_reg
+	io.result.valid := output_valid
   //io.crc_out := lfsr
  	io.result.bits  := lfsr
     

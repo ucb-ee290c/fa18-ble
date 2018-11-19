@@ -13,7 +13,7 @@ import chisel3.iotesters.{PeekPokeTester, Driver, ChiselFlatSpec}
 
 class Serial_CRCTests(c: Serial_CRC) extends PeekPokeTester(c) {
 
-
+/*
 val goldenModel = new SoftwareGoldenModel()
 
    for (i <- 1 to 100) {
@@ -64,14 +64,14 @@ val goldenModel = new SoftwareGoldenModel()
          step(1) 
       }
    }
-
+*/
 
 
 
 
 // =====================================================================
 // hard-coded test
-/*
+
    poke(c.io.init,true.B)
    poke(c.io.seed,"h00000f".U)
    poke(c.io.operand.valid,false.B)
@@ -97,62 +97,8 @@ val goldenModel = new SoftwareGoldenModel()
    step(1)
    expect(c.io.result.bits, "b1101_1010_0110_0000_0000_0000".U)
    expect(c.io.result.valid, true.B)
-*/
 
 
-
-// =====================================================================
-// old tests start from here
-/*
-   poke(c.io.operand.bits, "b0".U)
-   poke(c.io.operand.valid,true.B)
-
-   step(1)
-   expect(c.io.result.bits, "b1"U)
-   expect(c.io.result.valid, true.B)
-
-   poke(c.io.operand.bits, "b0".U)
-   poke(c.io.operand.valid,true.B)
-
-   step(1)
-   expect(c.io.result.bits, "b0"U)
-   expect(c.io.result.valid, true.B)
-
-
-   poke(c.io.operand.bits, "b0".U)
-   poke(c.io.operand.valid,true.B)
-
-   step(1)
-   expect(c.io.result.bits, "b0"U)
-   expect(c.io.result.valid, true.B)
-
-   poke(c.io.operand.bits, "b1".U)
-   poke(c.io.operand.valid,true.B)
-
-
-   step(1)
-   expect(c.io.result.bits, "b1"U)
-   expect(c.io.result.valid, true.B)
-
-   poke(c.io.operand.bits, "b0".U)
-   poke(c.io.operand.valid,true.B)
-
-   step(1)
-   expect(c.io.result.bits, "b1"U)
-   expect(c.io.result.valid, true.B)
-
-   poke(c.io.operand.bits, "b1".U)
-   poke(c.io.operand.valid,true.B)
-
-   step(1)
-   expect(c.io.result.bits, "b0"U)
-   expect(c.io.result.valid, true.B)
-
-   poke(c.io.operand.valid,false.B)
-
-  step(1)
-   expect(c.io.result.valid, false.B)
-*/
    step(2)
 }
 
