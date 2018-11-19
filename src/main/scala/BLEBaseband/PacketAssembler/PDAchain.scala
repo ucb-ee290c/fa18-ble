@@ -129,7 +129,7 @@ class TLReadQueue
 }
 
 
-abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends DspBlock[D, U, EO, EI, B] {
+abstract class PDABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends DspBlock[D, U, EO, EI, B] {
   val streamNode = AXI4StreamIdentityNode()
   val mem = None
 
@@ -141,23 +141,23 @@ abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends
     val out = streamNode.out.head._1
 
     //unpack and pack
-    val packet = Module(new PacketAssembler())
-    packet.io.in.bits := in.bits.data.asTypeOf(new PAInputBundle())
+    val packet = Module(new PacketDisAssembler())
+    packet.io.in.bits := in.bits.data.asTypeOf(new PDAInputBundle())
     packet.io.in.valid := in.valid
     in.ready := packet.io.in.ready
 
     out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready
 
-    out.bits.data := packet.io.out.bits.asUInt()
+    out.bits.data := packet.io.out.bits.data.asUInt()
   }
 }
 
-class TLPABlock(implicit p: Parameters)extends
-  PABlock[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle] with TLDspBlock
+class TLPDABlock(implicit p: Parameters)extends
+  PDABlock[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle] with TLDspBlock
 
 
-class PAThing
+class PDAThing
 (
   val depth: Int = 8,
 )(implicit p: Parameters) extends LazyModule {
