@@ -95,25 +95,6 @@ io.data.ready := true.B
   val reg_aa = "b01101011011111011001000101110001".U  
   val reg_crc_seed = "b010101010101010101010101".U
   val reg_dewhite_seed = "b1100101".U
-
-  /*val idle = Wire(UInt(3.W))
-  val preamble = Wire(UInt(3.W))
-  val aa = Wire(UInt(3.W))
-  val pdu_header = Wire(UInt(3.W))
-  val pdu_payload = Wire(UInt(3.W))
-  val crc = Wire(UInt(3.W))
-  val wait_dma = Wire(UInt(3.W))
-  idle := 0.U
-  preamble := 1.U
-  aa := 2.U
-  pdu_header := 3.U
-  pdu_payload := 4.U
-  crc := 5.U
-  wait_dma := 6.U
-  
-  val initial_state = idle
-  val state_list = List(idle, preamble, aa, pdu_header, pdu_payload, crc, wait_dma)
-  */
   
   //reg, wire
   //FSM
@@ -146,7 +127,8 @@ io.data.ready := true.B
 
   //data registers
   //val data = Wire(UInt(8.W))
-  val data = RegInit(0.U(8.W))
+  //val data = RegInit(0.U(8.W))
+  val data = Reg(Vec(8, Bool()))
 
   //crc
   val crc_reset = Wire(Bool())
@@ -181,7 +163,7 @@ io.data.ready := true.B
   when(state === idle || state === preamble){
     io.out.bits.data := 0.U
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    io.out.bits.data := data 
+    io.out.bits.data := data.asUInt 
   }
 
   io.out.bits.length := length
@@ -306,7 +288,7 @@ io.data.ready := true.B
     //PDU_Length
   //when(state === pdu_payload && counter === 0.U && counter_byte === 0.U){//note: can change to intuitive statement(add fire_w) with data
   when(state === pdu_header && counter === 1.U && dma_data_fire === true.B){//note: can change to intuitive statement(add fire_w) with data
-    length := data
+    length := data.asUInt
     length_valid := true.B
   }.elsewhen(state === idle) {
     length_valid := false.B
@@ -316,22 +298,22 @@ io.data.ready := true.B
 
     //Flag_aa
   when(state === aa && counter === 0.U && dma_data_fire === true.B){//note: same as above
-    when(data =/= reg_aa(7,0)){
+    when(data.asUInt =/= reg_aa(7,0)){
       flag_aa := true.B
       flag_aa_valid := true.B      
     }
   }.elsewhen(state === aa && counter === 1.U && dma_data_fire === true.B){
-    when(data =/= reg_aa(15,8)){
+    when(data.asUInt =/= reg_aa(15,8)){
       flag_aa := true.B
       flag_aa_valid := true.B      
     }    
   }.elsewhen(state === aa && counter === 2.U && dma_data_fire === true.B){
-    when(data =/= reg_aa(23,16)){
+    when(data.asUInt =/= reg_aa(23,16)){
       flag_aa := true.B
       flag_aa_valid := true.B      
     }
   }.elsewhen(state === aa && counter === 3.U && dma_data_fire === true.B){
-    when(data =/= reg_aa(31,24)){
+    when(data.asUInt =/= reg_aa(31,24)){
       flag_aa := true.B
       flag_aa_valid := true.B      
     }.otherwise{
@@ -343,17 +325,17 @@ io.data.ready := true.B
 
     //Flag_crc
   when(state === crc && counter === 0.U && dma_data_fire === true.B){//note: same as above
-    when(data =/= crc_result(7,0)){
+    when(data.asUInt =/= crc_result(7,0)){
       flag_crc := true.B
       flag_crc_valid := true.B      
     }
   }.elsewhen(state === crc && counter === 1.U && dma_data_fire === true.B){
-    when(data =/= crc_result(15,8)){
+    when(data.asUInt =/= crc_result(15,8)){
       flag_crc := true.B
       flag_crc_valid := true.B      
     }   
   }.elsewhen(state === crc && counter === 2.U && dma_data_fire === true.B){
-    when(data =/= crc_result(23,16)){
+    when(data.asUInt =/= crc_result(23,16)){
       flag_crc := true.B
       flag_crc_valid := true.B      
     }.otherwise{
@@ -453,10 +435,10 @@ io.data.ready := true.B
   dewhite_seed := reg_dewhite_seed
 
   //sequential logic
-  state      := state
-  counter    := counter
-  counter_byte := counter_byte
-  data     := data.asUInt
+  // state      := state
+  // counter    := counter
+  // counter_byte := counter_byte
+  // data     := data.asUInt
 
   //crc instantiate
   val crc_inst = Module(new Serial_CRC)

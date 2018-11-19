@@ -98,7 +98,7 @@ object PacketDisAssemblerTestUtils {
       tester.poke(fifo.bits.data, writeData(j).litValue)
       tester.step(1)
       if (tester.peek(outputByteFifo.valid) == 1) {
-        receivedOutputs += tester.peek(outputByteFifo.bits)
+        receivedOutputs += tester.peek(outputByteFifo.bits.asUInt)
       }
       if (j % 8 == 7) {
         val byte = checkData((j / 8) * 8 + 7, (j / 8) * 8)
@@ -112,7 +112,7 @@ object PacketDisAssemblerTestUtils {
     while (receivedOutputs.length < expectedOutputs.length) {
       tester.step(1)
       if (tester.peek(outputByteFifo.valid) == 1) {
-        receivedOutputs += tester.peek(outputByteFifo.bits)
+        receivedOutputs += tester.peek(outputByteFifo.bits.asUInt())
       }
     }
     (js zip receivedOutputs zip expectedOutputs).foreach {
