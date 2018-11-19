@@ -77,7 +77,7 @@ payload2_header=[
    % 5 bytes of ASCII data to be appended next   
 ];
 
-value_seq = [ fliplr(dec2bin(int8('2'),8)) fliplr(dec2bin(int8('9'),8)) fliplr(dec2bin(int8('0'),8)) fliplr(dec2bin(int8('C'),8)) ];
+value_seq = [ fliplr(dec2bin(int8('S'),8)) fliplr(dec2bin(int8('C'),8)) fliplr(dec2bin(int8('A'),8)) fliplr(dec2bin(int8('M'),8)) fliplr(dec2bin(int8('3'),8)) ];
 
 payload2_data = zeros(1,numel(value_seq));
 for ii=1:numel(value_seq)
@@ -109,18 +109,32 @@ end
 % end
 
 % pdu=[pdu_header AdvA payload1 payload2_header payload2_data payload3];
-pdu=[pdu_header AdvA payload1 payload2_header payload2_data];
-
+pdu = [pdu_header AdvA payload1 payload2_header payload2_data];
 % then whiten payload and CRC, pg 2601 
 % then loop every 100ms
+str1 = mat2str(pdu);
+str1(isspace(str1)) = [];
+disp('The expected paylad of Packet Assembler is:');
+disp(str1);
 
-crc=fliplr(LFSR_BLE_CRC(pdu)); % 3 bytes
+crc = fliplr(LFSR_BLE_CRC(pdu)); % 3 bytes
 
-adv_channel=37;
-pdu_crc_whitened=LFSR_BLE_WHITEN([pdu crc],adv_channel);
+adv_channel = 37;
+pdu_crc_whitened = LFSR_BLE_WHITEN([pdu crc],adv_channel);
 
-packet01=[pre_preamble bpreamble baccess_address pdu_crc_whitened]; % LSB-first
-disp(mat2str(packet01));
+packet01 = [pre_preamble bpreamble baccess_address pdu_crc_whitened]; % LSB-first
+
+% n = 1;
+% while n <= 214
+%     disp(binaryVectorToHex(packet01(n:n+4),'LSBFirst'))  
+%     n = n+4;
+% end
+
+str2 = mat2str(packet01);
+str2(isspace(str2)) = [];
+disp('The expected output of Packet Assembler is:');
+disp(str2);
+
 % load recov_packet_scum3.mat
 % packet01=[ 0 0 0 1 1 1 recov_packet];
 
