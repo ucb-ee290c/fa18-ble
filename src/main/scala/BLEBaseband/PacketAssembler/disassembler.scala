@@ -48,13 +48,13 @@ object PacketDisAssemblerIO {
 	def apply(): PacketDisAssemblerIO = new PacketDisAssemblerIO	
 }
 
-/*trait HasPeripheryPDA extends BaseSubsystem {
+trait HasPeripheryPDA extends BaseSubsystem {
   // instantiate cordic chain
   val pdaChain = LazyModule(new PDAThing)
   // connect memory interfaces to pbus
   pbus.toVariableWidthSlave(Some("pdaWrite")) { pdaChain.writeQueue.mem.get }
   pbus.toVariableWidthSlave(Some("pdaRead")) { pdaChain.readQueue.mem.get }
-}*/
+}
 
 class PacketDisAssembler extends Module {
     val io = IO(new PacketDisAssemblerIO)
