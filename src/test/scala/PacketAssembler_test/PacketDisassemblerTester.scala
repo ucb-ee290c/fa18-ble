@@ -49,7 +49,7 @@ object PacketDisAssemblerTestUtils {
     * @param data UInt literal containing data to write
     * @param numBits Number of bits to write
     */
-  def writeBitsToFIFO[T <: Module](tester: PeekPokeTester[T], fifo: DecoupledIO[UInt], data: UInt, numBits: Int): Unit = {
+  def writeBitsToFIFO[T <: Module](tester: PeekPokeTester[T], fifo: DecoupledIO[PDAInputBundle], data: UInt, numBits: Int): Unit = {
     for (j <- 0 to numBits - 1) {
       // Wait for FIFO to become ready
       var count = 0
@@ -62,7 +62,7 @@ object PacketDisAssemblerTestUtils {
         count += 1
       }
       tester.poke(fifo.valid, 1)
-      tester.poke(fifo.bits, data(j).litValue)
+      tester.poke(fifo.bits.data, data(j).litValue)
       tester.step(1)
     }
     tester.poke(fifo.valid, 0)
@@ -79,9 +79,9 @@ object PacketDisAssemblerTestUtils {
     * @param checkData Data with which to check output byte FIFO
     */
   def writeBitsToFIFOAndCheck[T <: Module](tester: PeekPokeTester[T],
-                                           fifo: DecoupledIO[UInt], writeData: UInt,
+                                           fifo: DecoupledIO[PDAInputBundle], writeData: UInt,
                                            startBit: Int, endBit: Int,
-                                           outputByteFifo: DecoupledIO[UInt], checkData: UInt): Unit = {
+                                           outputByteFifo: DecoupledIO[PDAOutputBundle], checkData: UInt): Unit = {
     // Keep track of received vs. expected outputs separately since there may be some delays
     // between when the output is sent vs received.
     val receivedOutputs: ArrayBuffer[BigInt] = ArrayBuffer()
@@ -95,7 +95,7 @@ object PacketDisAssemblerTestUtils {
         tester.step(1)
       }
       tester.poke(fifo.valid, 1)
-      tester.poke(fifo.bits, writeData(j).litValue)
+      tester.poke(fifo.bits.data, writeData(j).litValue)
       tester.step(1)
       if (tester.peek(outputByteFifo.valid) == 1) {
         receivedOutputs += tester.peek(outputByteFifo.bits)
@@ -147,82 +147,82 @@ class PacketDisAssemblerTest(c: PacketDisAssembler) extends PeekPokeTester(c) {
   )
 
   //initialize
-  poke(c.io.in.switch, false.B)
+  poke(c.io.in.bits.switch, false.B)
 
-  poke(c.io.out.data.ready, false.B)
-  poke(c.io.out.length.ready, false.B)
-  poke(c.io.out.flag_aa.ready, false.B)
-  poke(c.io.out.flag_crc.ready, false.B)
+  poke(c.io.out.ready, false.B)
+  //poke(c.io.out.ready, false.B)
+  //poke(c.io.out.ready, false.B)
+  //poke(c.io.out.ready, false.B)
 
-  poke(c.io.in.data.valid, false.B)
-  poke(c.io.in.data.bits, 0.U)
+  poke(c.io.in.valid, false.B)
+  poke(c.io.in.bits.data, 0.U)
 
   step(2)
 
   //start of receiving packet
-  poke(c.io.in.switch, true.B)
+  poke(c.io.in.bits.switch, true.B)
 
-  poke(c.io.out.data.ready, true.B)
-  poke(c.io.out.length.ready, true.B)
-  poke(c.io.out.flag_aa.ready, true.B)
-  poke(c.io.out.flag_crc.ready, true.B)
+  poke(c.io.out.ready, true.B)
+  //poke(c.io.out.ready, true.B)
+  //poke(c.io.out.ready, true.B)
+  //poke(c.io.out.ready, true.B)
 
-  poke(c.io.in.data.valid, false.B)
-  poke(c.io.in.data.bits, 0.U)
+  poke(c.io.in.valid, false.B)
+  poke(c.io.in.bits.data, 0.U)
 
   // Random sequence before pre_preamble
-  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in.data, data = Testcase.random_sequence_rev, numBits = 72)
+  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in, data = Testcase.random_sequence_rev, numBits = 72)
 
   // pre_preamble
-  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in.data, data = Testcase.pre_preamble_rev, numBits = 6)
-  expect(c.io.out.data.valid, false.B) //note
-  println(s"after random_sequence\n${peek(c.io.out.data.bits)}\t0.U")
+  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in, data = Testcase.pre_preamble_rev, numBits = 6)
+  expect(c.io.out.valid, false.B) //note
+  println(s"after random_sequence\n${peek(c.io.out.bits.data)}\t0.U")
 
   // PREAMBLE
-  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in.data, data = Testcase.preamble_rev, numBits = 8)
-  expect(c.io.out.data.valid, false.B) //note
-  println(s"after preamble\n${peek(c.io.out.data.valid)}\tfalse")
+  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in, data = Testcase.preamble_rev, numBits = 8)
+  expect(c.io.out.valid, false.B) //note
+  println(s"after preamble\n${peek(c.io.out.valid)}\tfalse")
 
   // AA
-  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in.data, writeData = Testcase.wholepacket_rad_rev,
+  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in, writeData = Testcase.wholepacket_rad_rev,
     startBit = 0, endBit = 31,
-    outputByteFifo = c.io.out.data, checkData = Testcase.wholepacket_dig_rev)
+    outputByteFifo = c.io.out, checkData = Testcase.wholepacket_dig_rev)
   step(1) // need an extra cycle for out.flag_aa to be valid
-  expect(c.io.out.flag_aa.bits, false.B)
-  expect(c.io.out.flag_aa.valid, true.B)
-  println(s"j=flagAA\n${peek(c.io.out.flag_aa.bits)}\ttrue")
-  println(s"j=flagAA\n${peek(c.io.out.flag_aa.valid)}\ttrue")
+  expect(c.io.out.bits.flag_aa, false.B)
+  expect(c.io.out.bits.flag_aa_valid, true.B)
+  println(s"j=flagAA\n${peek(c.io.out.bits.flag_aa)}\ttrue")
+  println(s"j=flagAA\n${peek(c.io.out.bits.flag_aa_valid)}\ttrue")
 
   // PDU_HEADER
-  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in.data, writeData = Testcase.wholepacket_rad_rev,
+  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in, writeData = Testcase.wholepacket_rad_rev,
     startBit = 32, endBit = 47,
-    outputByteFifo = c.io.out.data, checkData = Testcase.wholepacket_dig_rev)
+    outputByteFifo = c.io.out, checkData = Testcase.wholepacket_dig_rev)
   step(1) // need an extra cycle before out.length is valid
-  expect(c.io.out.length.bits, 16.U)
-  expect(c.io.out.length.valid, true.B)
-  println(s"j=out.length\n${peek(c.io.out.length.bits)}\t16.U")
+  expect(c.io.out.bits.length, 16.U)
+  expect(c.io.out.bits.length_valid, true.B)
+  println(s"j=out.length\n${peek(c.io.out.bits.length)}\t16.U")
 
   step(1)
-  poke(c.io.out.length.ready, false.B)
+  poke(c.io.out.ready, false.B)
 
   // PDU_PAYLOAD
-  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in.data, writeData = Testcase.wholepacket_rad_rev,
+  PacketDisAssemblerTestUtils.writeBitsToFIFOAndCheck(this, fifo = c.io.in, writeData = Testcase.wholepacket_rad_rev,
     startBit = 48, endBit = 22 * 8 - 1,
-    outputByteFifo = c.io.out.data, checkData = Testcase.wholepacket_dig_rev)
+    outputByteFifo = c.io.out, checkData = Testcase.wholepacket_dig_rev)
 
   // CRC
-  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in.data, data = Testcase.CRC_rad_rev, numBits = 24)
+  PacketDisAssemblerTestUtils.writeBitsToFIFO(this, c.io.in, data = Testcase.CRC_rad_rev, numBits = 24)
 
   step(2)
-  expect(c.io.out.flag_crc.bits, false.B)
-  expect(c.io.out.flag_crc.valid, true.B)
-  println(s"j=flagCRC_bits\n${peek(c.io.out.flag_crc.bits)}\tfalse")
-  println(s"j=flagCRC_valid\n${peek(c.io.out.flag_crc.valid)}\ttrue")
+  expect(c.io.out.bits.flag_crc, false.B)
+  expect(c.io.out.bits.flag_crc_valid, true.B)
+  println(s"j=flagCRC_bits\n${peek(c.io.out.bits.flag_crc)}\tfalse")
+  println(s"j=flagCRC_valid\n${peek(c.io.out.bits.flag_crc_valid)}\ttrue")
 
   step(2)
 
-  poke(c.io.out.flag_aa.ready, false.B)
-  poke(c.io.out.flag_crc.ready, false.B)
+  poke(c.io.out.ready, false.B)
+  //poke(c.io.out.ready, false.B)
 
 
   //todo: add FIFO
