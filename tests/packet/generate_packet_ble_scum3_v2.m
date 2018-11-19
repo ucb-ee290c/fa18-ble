@@ -43,7 +43,7 @@ TxAdd=0; % 0 means legit address, 1 means random address
 RxAdd=0; % not sure what these are for
 % length_PDU=[1 1 1 1 0 0 0 0]; % 8 bits in BLE 5. 6 for address, 3 for headers, 6 for name payload. fliplr(dec2bin(15,8))
 % length_PDU=[1 0 1 0 0 1 0 0]; % 8 bits in BLE 5. max typical length 37. fliplr(dec2bin(37,8))
-length_PDU=[0 0 0 0 1 0 0 0]; % 8 bits in BLE 5. fliplr(dec2bin(16,8))
+length_PDU=[1 1 1 1 0 0 0 0]; % 8 bits in BLE 5. fliplr(dec2bin(16,8))
 
 pdu_header= [PDU_type RFU TxAdd RxAdd length_PDU];
 
@@ -77,7 +77,7 @@ payload2_header=[
    % 5 bytes of ASCII data to be appended next   
 ];
 
-value_seq = [ fliplr(dec2bin(int8('S'),8)) fliplr(dec2bin(int8('C'),8)) fliplr(dec2bin(int8('A'),8)) fliplr(dec2bin(int8('M'),8)) fliplr(dec2bin(int8('3'),8)) ];
+value_seq = [ fliplr(dec2bin(int8('2'),8)) fliplr(dec2bin(int8('9'),8)) fliplr(dec2bin(int8('0'),8)) fliplr(dec2bin(int8('C'),8)) ];
 
 payload2_data = zeros(1,numel(value_seq));
 for ii=1:numel(value_seq)
@@ -112,10 +112,59 @@ end
 pdu = [pdu_header AdvA payload1 payload2_header payload2_data];
 % then whiten payload and CRC, pg 2601 
 % then loop every 100ms
-str1 = mat2str(pdu);
-str1(isspace(str1)) = [];
-disp('The expected paylad of Packet Assembler is:');
-disp(str1);
+
+
+n=1;
+hexVal = '';
+while n <= length(pdu)
+    binVal = mat2str(pdu(n:n+3));
+    binVal(isspace(binVal)) = [];
+    binVal = str2num(binVal);
+    % use switch stupidly to perform bin2hex(don't support on my platform)
+    % the binVal is in reverse order
+    % case 1 --> 0001 --> 1000(bin) --> 8(hex)
+   switch binVal
+    case 0
+        hexVal = strcat(hexVal,'0');
+    case 1
+        hexVal = strcat(hexVal,'8');
+    case 10
+        hexVal = strcat(hexVal,'4');
+    case 11
+        hexVal = strcat(hexVal,'C');
+    case 100
+        hexVal = strcat(hexVal,'2');
+    case 101
+        hexVal = strcat(hexVal,'A');
+    case 110
+        hexVal = strcat(hexVal,'6');
+    case 111
+        hexVal = strcat(hexVal,'E');
+    case 1000
+        hexVal = strcat(hexVal,'1');
+    case 1001
+        hexVal = strcat(hexVal,'9');
+    case 1010
+        hexVal = strcat(hexVal,'5');
+    case 1011
+        hexVal = strcat(hexVal,'D');
+    case 1100
+        hexVal = strcat(hexVal,'3');
+    case 1101
+        hexVal = strcat(hexVal,'B');
+    case 1110
+        hexVal = strcat(hexVal,'7');
+    case 1111
+        hexVal = strcat(hexVal,'F');
+    otherwise
+        fprintf('other value')
+   end
+    n=n+4;
+end
+
+
+disp('The expected payload of Packet Assembler is:');
+disp(fliplr(hexVal));
 
 crc = fliplr(LFSR_BLE_CRC(pdu)); % 3 bytes
 
@@ -124,11 +173,11 @@ pdu_crc_whitened = LFSR_BLE_WHITEN([pdu crc],adv_channel);
 
 packet01 = [pre_preamble bpreamble baccess_address pdu_crc_whitened]; % LSB-first
 
-% n = 1;
-% while n <= 214
-%     disp(binaryVectorToHex(packet01(n:n+4),'LSBFirst'))  
-%     n = n+4;
-% end
+%  n = 1;
+%  while n <= 214
+%      disp(binaryVectorToHex(packet01(n:n+4),'LSBFirst'))  
+%      n = n+4;
+%  end
 
 str2 = mat2str(packet01);
 str2(isspace(str2)) = [];
