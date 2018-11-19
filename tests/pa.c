@@ -18,11 +18,12 @@ int main(void)
 {
   uint64_t trigger = 1;
   uint64_t data_AA = 0x8E89BED6U;
-  uint64_t data_pduH = 0x1002U; 
+//  uint64_t data_pduH = 0x1002U;
+  uint64_t data_pduH = 0x0F02U;  //first two hex numbers indicate the length of payload
   uint64_t data_pduAA = 0x0002723280C6U;
   uint64_t data_pduData1 = 0x0806050102U; //payload 1
-  uint64_t data_pduData2 = 0x334D554353U; 
-//  uint64_t data_pduData2 = 0x43303932U; //payload 2
+//  uint64_t data_pduData2 = 0x334D554353U; 
+  uint64_t data_pduData2 = 0x43303932U; //payload 2
 
 
   uint64_t done = 0;
@@ -59,7 +60,7 @@ int main(void)
     printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
-    if (i>=17 && i<22) {
+    if (i>=17 && i<21) {
 	data_eight = data_pduData2>>8*(i-17);
     printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
