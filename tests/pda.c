@@ -19,19 +19,19 @@ int main(void)
 {
     //input: pre_preamble bpreamble baccess_address pdu_crc_whitened
   uint64_t trigger = 1;
-  uint64_t data_pre_preamble = 0b000111U;
-  uint64_t data_preamble = 0b0101_0101U;
-  uint64_t data_AA = 0b0110_1011_0111_1101_1001_0001_0111_0001U;
-  uint64_t data_pdu_crc_whiten = 0b1111_0001_1011_1011_1000_1001_1000_0100_1111_0000_1010_10110010011000001101111011100000110000101000011100100111100110100010100000111100101110100000110001001110110011101011U;
+  uint64_t data_pre_preamble = 000111U;
+  uint64_t data_preamble = 01010101U;
+  uint64_t data_AA = 01101011011111011001000101110001U;//8*4
+  uint64_t data_pdu_crc_whiten = 1111000110111011100010011000010011110000101010110010011000001101111011100000110000101000011100100111100110100010100000111100101110100000110001001110110011101011U;//40*4
 
   //output:
   uint64_t done = 0;
   uint8_t data_eight;
   uint8_t PDA_out;
 
-  for (int i = 0; i < 22; i++){
-    if (i>=0 && i<4) {
-	    data_eight = data_AA>>8*i;
+  for (int i = 0; i < 21; i++){
+    if (i>=0 && i<3) {
+	    data_eight = data_AA>>2*i;//How to group them? 2 in this case
         if (i==0) {
             printf("pack data: %#010x \n", pack_PABundle(1, data_eight));
             reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(1, data_eight));
@@ -44,26 +44,22 @@ int main(void)
         }
     }
 
-    if (i>=4 && i<6) {
-	data_eight = data_pduH>>8*(i-4);
+    if (i>=3 && i<7) {
+	data_eight = data_pduH>>2*(i-3);
     printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
-    if (i>=6 && i<12) {
-	data_eight = data_pduAA>>8*(i-6);
+    if (i>=7 && i<23) {
+	data_eight = data_pduAA>>2*(i-7);
     printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
-    if (i>=12 && i<17) {
-    data_eight = data_pduData1>>8*(i-12);
+    if (i>=23 && i<103) {
+    data_eight = data_pduData1>>2*(i-23);
     printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
-    if (i>=17 && i<21) {
-	data_eight = data_pduData2>>8*(i-17);
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
-    reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
-    }
+
 
   }
 
