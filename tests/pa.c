@@ -8,7 +8,6 @@
 
 #include "mmio.h"
 
-
 uint16_t pack_PABundle(uint8_t trigger, uint8_t data) {
   return (trigger << 8)|data;
 }
@@ -19,7 +18,7 @@ int getDigits(uint64_t number) { //count the number of digits for each data. e.g
      count++;
      number = number >> 1;
   }
-  return count;
+  return count/4;
 }
 
 int main(void)
@@ -34,23 +33,26 @@ int main(void)
   uint64_t data_pduData2 = 0x43303932U; //payload 2
   
   //interactive interface (optional)
-  /*printf("Enter data_AA in hex: (End with U)");
-  scanf("%x", &data_AA);
-  printf("Enter data_pduH in hex: (End with U)");
-  scanf("%x", &data_pduH);
-  printf("Enter data_pduAA in hex: (End with U)");
-  scanf("%x", &data_pduAA);
-  printf("Enter data_pduData1 in hex: (End with U)");
-  scanf("%x", &data_pduData1);
-  printf("Enter data_pduData2 in hex: (End with U)");
-  scanf("%x", &data_pduData2);*/
+//   printf("Enter data_AA in hex: (End with U)");
+//   scanf("%x", &data_AA);
+//   printf("Enter data_pduH in hex: (End with U)");
+//   scanf("%x", &data_pduH);
+//   printf("Enter data_pduAA in hex: (End with U)");
+//   scanf("%x", &data_pduAA);
+//   printf("Enter data_pduData1 in hex: (End with U)");
+//   scanf("%x", &data_pduData1);
+//   printf("Enter data_pduData2 in hex: (End with U)");
+//   scanf("%x", &data_pduData2);
 
-  int digits_data_AA = getDigits(data_AA);
-  int digits_data_pduH = getDigits(data_pduH);
-  int digits_data_pduAA = getDigits(data_pudAA);
-  int digits_data_pduData1 = getDigits(data_pduData1);
-  int digits_data_pduData2 = getDigits(data_pduData2);
+  int digits_data_AA = 8;
+  int digits_data_pduH = 4;
+  int digits_data_pduAA = 12;
+  int digits_data_pduData1 = 10;
+  //int digits_data_pduData2 = getDigits(data_pduData2);
+  int digits_data_pduData2 = 8;
 
+  //printf("PDU Length: %d", digits_data_pduData2);
+ 
   uint64_t done = 0;
   uint8_t data_eight;
   uint8_t PA_out;
