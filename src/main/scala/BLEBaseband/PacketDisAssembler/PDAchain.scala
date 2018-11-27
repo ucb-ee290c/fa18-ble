@@ -159,12 +159,13 @@ class TLPDABlock(implicit p: Parameters)extends
 
 class PDAThing
 (
-  val depth: Int = 8,
+val depthWrite: Int = 256,
+val depthRead : Int = 32
 )(implicit p: Parameters) extends LazyModule {
   // instantiate lazy modules
-  val writeQueue = LazyModule(new TLWriteQueue(depth))
+  val writeQueue = LazyModule(new TLWriteQueue(depthWrite))
   val packet = LazyModule(new TLPDABlock())
-  val readQueue = LazyModule(new TLReadQueue(depth))
+  val readQueue = LazyModule(new TLReadQueue(depthRead))
 
   // connect streamNodes of queues and cordic
   readQueue.streamNode := packet.streamNode := writeQueue.streamNode

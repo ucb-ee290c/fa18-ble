@@ -10,7 +10,7 @@ import freechips.rocketchip.subsystem.BaseSubsystem
 class PDAInputBundle extends Bundle {
 	    val switch = Output(Bool())
       val data = Output(UInt(1.W))//decouple(source): data, pop, empty
-        
+
 	override def cloneType: this.type = PDAInputBundle().asInstanceOf[this.type]
 }
 
@@ -19,13 +19,15 @@ object PDAInputBundle {
 }
 
 class PDAOutputBundle extends Bundle {
-      val data = Output(UInt(8.W))//decouple(sink): data, puch, full
+        val data = Output(UInt(8.W))//decouple(sink): data, push, full
     	val length = Output(UInt(8.W))
 	    val length_valid = Output(Bool())
     	val flag_aa = Output(Bool())
 	    val flag_aa_valid = Output(Bool())
-    	val flag_crc = Output(Bool()) 
+    	val flag_crc = Output(Bool())
 	    val flag_crc_valid = Output(Bool())
+		val done = Output(Bool())
+
 
 	override def cloneType: this.type = PDAOutputBundle().asInstanceOf[this.type]
 }
@@ -42,7 +44,7 @@ class PacketDisAssemblerIO extends Bundle {
 }
 
 object PacketDisAssemblerIO {
-	def apply(): PacketDisAssemblerIO = new PacketDisAssemblerIO	
+	def apply(): PacketDisAssemblerIO = new PacketDisAssemblerIO
 }
 
 trait HasPeripheryPDA extends BaseSubsystem {
@@ -58,14 +60,15 @@ class PacketDisAssembler extends Module {
   /*val io = IO(new Bundle {
     //DMA, REG
     val switch = Input(Bool())
-    val REG_aa_i = Input(UInt(32.W))   
+    val REG_aa_i = Input(UInt(32.W))
     val REG_crc_Seed_i = Input(UInt(24.W))
     val REG_DeWhite_Seed_i = Input(UInt(7.W))
 
     val data = DecoupledIO(UInt(8.W))//decouple(sink): data, puch, full
     val length = Decoupled(UInt(8.W))
     val flag_aa = Decoupled(Bool())
-    val flag_crc = Decoupled(Bool())     
+    val flag_crc = Decoupled(Bool())
+
 
     //AFIFO
     val data = Flipped(DecoupledIO(UInt(1.W)))//decouple(source): data, pop, empty
@@ -78,7 +81,7 @@ class PacketDisAssembler extends Module {
   val idle :: preamble :: aa :: pdu_header :: pdu_payload :: crc :: wait_dma :: Nil = Enum(7)
   val state = RegInit(idle)
 
-  val reg_aa = "b01101011011111011001000101110001".U  
+  val reg_aa = "b01101011011111011001000101110001".U
 
   val counter = RegInit(0.U(8.W)) //counter for bytes in packet
   val counter_byte = RegInit(0.U(3.W)) //counter for bits in bytes
@@ -90,6 +93,7 @@ class PacketDisAssembler extends Module {
   val flag_aa_valid = RegInit(false.B)
   val flag_crc = RegInit(false.B)
   val flag_crc_valid = RegInit(false.B)
+  val done = RegInit(false.B)
 
   //Preamble
   val preamble0 = "b10101010".U
@@ -98,7 +102,7 @@ class PacketDisAssembler extends Module {
 
   //Handshake Parameters
   val out_valid = RegInit(false.B)
-  val out_fire = io.out.ready & io.out.valid 
+  val out_fire = io.out.ready & io.out.valid
   val in_ready = RegInit(Bool(), false.B)
   val in_fire = io.in.ready & io.in.valid
 
@@ -116,9 +120,9 @@ class PacketDisAssembler extends Module {
   //whitening
   val dewhite_reset = (state === idle)
   val dewhite_data = Wire(UInt(1.W))
-  val dewhite_valid = Wire(Bool())  
+  val dewhite_valid = Wire(Bool())
   val dewhite_result = Wire(UInt(1.W))
-  val dewhite_seed = "b1100101".U     
+  val dewhite_seed = "b1100101".U
 
 
 
@@ -126,7 +130,7 @@ class PacketDisAssembler extends Module {
   when(state === idle || state === preamble){
     io.out.bits.data := 0.U
   }.otherwise{//aa, pdu_header, pdu_payload, crc
-    io.out.bits.data := data.asUInt 
+    io.out.bits.data := data.asUInt
   }
 
   io.out.bits.length := length
@@ -151,6 +155,7 @@ class PacketDisAssembler extends Module {
     flag_aa_valid := false.B
     flag_crc := false.B
     flag_crc_valid := false.B
+	done := false.B
     */
     when(io.in.bits.switch === true.B && io.in.valid){//note: switch usage
       state := preamble
@@ -164,7 +169,7 @@ class PacketDisAssembler extends Module {
       counter_byte := 0.U
     }.otherwise{
       state := preamble
-    }   
+    }
   }.elsewhen(state === aa){
     when(counter === 3.U && out_fire === true.B){//note
       state := pdu_header
@@ -173,7 +178,7 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := aa
       when(out_fire === true.B){
-        counter := counter+1.U     
+        counter := counter+1.U
       }
       when(in_fire === true.B){
         when(counter_byte === 7.U){
@@ -181,8 +186,8 @@ class PacketDisAssembler extends Module {
         }.otherwise{
           counter_byte := counter_byte+1.U
         }
-      }       
-    }     
+      }
+    }
   }.elsewhen(state === pdu_header){
     when(counter === 1.U && out_fire === true.B){//note
       state := pdu_payload
@@ -191,7 +196,7 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := pdu_header
       when(out_fire === true.B){
-        counter := counter+1.U     
+        counter := counter+1.U
       }
       when(in_fire === true.B){
         when(counter_byte === 7.U){
@@ -199,8 +204,8 @@ class PacketDisAssembler extends Module {
         }.otherwise{
           counter_byte := counter_byte+1.U
         }
-      }       
-    }     
+      }
+    }
   }.elsewhen(state === pdu_payload){
     when(counter === length-1.U && out_fire === true.B){//note
       state := crc
@@ -209,7 +214,7 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := pdu_payload
       when(out_fire === true.B){
-        counter := counter+1.U     
+        counter := counter+1.U
       }
       when(in_fire === true.B){
         when(counter_byte === 7.U){
@@ -217,8 +222,8 @@ class PacketDisAssembler extends Module {
         }.otherwise{
           counter_byte := counter_byte+1.U
         }
-      }         
-    }     
+      }
+    }
   }.elsewhen(state === crc){
     when(counter === 2.U && out_fire === true.B){//note
       state := wait_dma
@@ -227,7 +232,7 @@ class PacketDisAssembler extends Module {
     }.otherwise{
       state := crc
       when(out_fire === true.B){
-        counter := counter+1.U     
+        counter := counter+1.U
       }
       when(in_fire === true.B){
         when(counter_byte === 7.U){
@@ -235,13 +240,15 @@ class PacketDisAssembler extends Module {
         }.otherwise{
           counter_byte := counter_byte+1.U
         }
-      }       
-    }   
+      }
+    }
   }.elsewhen(state === wait_dma) {
     when (io.out.ready === true.B) {
+	  done := true.B
       state := idle
     }.otherwise {
       state := wait_dma
+	  done := false.B
     }
   }.otherwise{
     state := idle//error
@@ -262,24 +269,24 @@ class PacketDisAssembler extends Module {
   when(state === aa && counter === 0.U && out_fire === true.B){//note: same as above
     when(data.asUInt =/= reg_aa(7,0)){
       flag_aa := true.B
-      flag_aa_valid := true.B      
+      flag_aa_valid := true.B
     }
   }.elsewhen(state === aa && counter === 1.U && out_fire === true.B){
     when(data.asUInt =/= reg_aa(15,8)){
       flag_aa := true.B
-      flag_aa_valid := true.B      
-    }    
+      flag_aa_valid := true.B
+    }
   }.elsewhen(state === aa && counter === 2.U && out_fire === true.B){
     when(data.asUInt =/= reg_aa(23,16)){
       flag_aa := true.B
-      flag_aa_valid := true.B      
+      flag_aa_valid := true.B
     }
   }.elsewhen(state === aa && counter === 3.U && out_fire === true.B){
     when(data.asUInt =/= reg_aa(31,24)){
       flag_aa := true.B
-      flag_aa_valid := true.B      
+      flag_aa_valid := true.B
     }.otherwise{
-      flag_aa_valid := true.B        
+      flag_aa_valid := true.B
     }
   }.otherwise{
     //do nothing: registers preserve value//note
@@ -289,19 +296,19 @@ class PacketDisAssembler extends Module {
   when(state === crc && counter === 0.U && out_fire === true.B){//note: same as above
     when(data.asUInt =/= crc_result(7,0)){
       flag_crc := true.B
-      flag_crc_valid := true.B      
+      flag_crc_valid := true.B
     }
   }.elsewhen(state === crc && counter === 1.U && out_fire === true.B){
     when(data.asUInt =/= crc_result(15,8)){
       flag_crc := true.B
-      flag_crc_valid := true.B      
-    }   
+      flag_crc_valid := true.B
+    }
   }.elsewhen(state === crc && counter === 2.U && out_fire === true.B){
     when(data.asUInt =/= crc_result(23,16)){
       flag_crc := true.B
-      flag_crc_valid := true.B      
+      flag_crc_valid := true.B
     }.otherwise{
-      flag_crc_valid := true.B        
+      flag_crc_valid := true.B
     }
   }.otherwise{
     //do nothing: registers preserve value//note
@@ -326,9 +333,9 @@ class PacketDisAssembler extends Module {
     in_ready := true.B
   }.otherwise{//aa, pdu_header, pdu_payload, crc
     when(counter_byte === 7.U && in_fire === true.B){
-      in_ready := false.B     
+      in_ready := false.B
     }.elsewhen(out_fire === true.B){
-      in_ready := true.B        
+      in_ready := true.B
     }
   }
 
@@ -359,7 +366,7 @@ class PacketDisAssembler extends Module {
           data(i) := true.B
         }
         */
-      }      
+      }
     }
   }.elsewhen(state === aa){
     when(in_fire === true.B){
@@ -385,7 +392,7 @@ class PacketDisAssembler extends Module {
 
 
   //dewhitening
-  when(state === pdu_header || state === pdu_payload || state === crc){//check corner cases  
+  when(state === pdu_header || state === pdu_payload || state === crc){//check corner cases
     dewhite_data  := io.in.bits.data
     dewhite_valid := in_fire
   }.otherwise{
