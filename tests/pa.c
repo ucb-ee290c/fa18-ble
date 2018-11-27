@@ -13,12 +13,15 @@ uint16_t pack_PABundle(uint8_t trigger, uint8_t data) {
 }
 
 int getDigits(uint64_t number) { //count the number of digits for each data. e.g, data_AA should be 8.
-  int count = 0;
-  while (number) {
-     count++;
-     number = number >> 1;
+  int num =  number >> 8; //get the leftmost two hex
+  int i = 1;
+  int digits = 0;
+  while (num) {
+     if (num & 1) digits = digits + i; //check the last bit
+     i = i*2;
+     num = num >> 1;
   }
-  return count/4;
+  return 2*digits;//convert byte to bit
 }
 
 int main(void)
@@ -48,8 +51,8 @@ int main(void)
   int digits_data_pduH = 4;
   int digits_data_pduAA = 12;
   int digits_data_pduData1 = 10;
-  //int digits_data_pduData2 = getDigits(data_pduData2);
-  int digits_data_pduData2 = 8;
+  int digits_data_pduData2 = getDigits(data_pduH) - digits_data_pduAA - digits_data_pduData1; //Use the leftmost two hex to calculate total digits of pdu
+  //int digits_data_pduData2 = 8;
 
   //printf("PDU Length: %d", digits_data_pduData2);
  
