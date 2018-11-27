@@ -14,13 +14,22 @@ uint16_t pack_PDABundle(uint8_t trigger, uint8_t data) {
   return (trigger << 1)|data;
 }
 
+uint64_t convertToHex(uint64_t number) {
+  uint64_t hexResult = 0;
+  uint64_t hexChar[16]={0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf}; 
+  while(number) {
+      hexResult = hexChar[number & 0xf] + hexResult << 4;
+      number = (unsigned) number >> 4;
+}
+  return hexResult;
+}
 
 int main(void)
 {
     //input: pre_preamble bpreamble baccess_address pdu_crc_whitened
   uint64_t trigger = 1;
   uint64_t data_pre_preamble = 000111U;
-  uint64_t data_preamble = 01010101U;
+  uint64_t data_preamble = 01010101U;//2*4
   uint64_t data_AA = 01101011011111011001000101110001U;//8*4
   uint64_t data_pdu_crc_whiten = 1111000110111011100010011000010011110000101010110010011000001101111011100000110000101000011100100111100110100010100000111100101110100000110001001110110011101011U;//40*4
 
@@ -29,10 +38,10 @@ int main(void)
   uint8_t data;
   uint8_t PDA_out;
 
-  for (int i = 0; i < 367; i++){
+  for (int i = 0; i < 50; i++){
 
-    if (i>=0 && i<8) {
-        data = (data_preamble>>(7-i)) & 1;
+    if (i>=0 && i<2) {
+        data = (convertToHex(data_preamble)>>(7-i)) & 1;
         if (i==0) {
             printf("pack data: %#010x \n", pack_PDABundle(1, data));
             reg_write8(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(1, data));
@@ -44,13 +53,13 @@ int main(void)
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
         }
     }
-    if (i>=8 && i<40) {
-	data = (data_AA>>(39-i+8)) & 1;
+    if (i>=2 && i<10) {
+	data = (convertToHex(data_AA)>>(9-i+2)) & 1;
     printf("pack data: %#010x \n", pack_PDABundle(0, data));
     reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
-    if (i>=40 && i<360) {
-	data = (data__pdu_crc_whiten>>(359-i+40)) & 1;
+    if (i>=10 && i<50) {
+	data = (convertToHex(data__pdu_crc_whiten)>>(49-i+10)) & 1;
     printf("pack data: %#010x \n", pack_PDABundle(0, data));
     reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
