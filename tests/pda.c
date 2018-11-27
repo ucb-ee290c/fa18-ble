@@ -26,14 +26,15 @@ uint16_t pack_PDABundle(uint8_t trigger, uint8_t data) {
 
 uint64_t convertToHex(uint64_t number) {
   uint64_t hexResult = 0x0;
+  int i = 0;
   while(number) {
-    if(number%16 <= 9) hexResult = hexResult<<4 + number%16;
-    else if (number%16 == 10) hexResult = hexResult<<4 + 0xa;
-    else if (number%16 == 11) hexResult = hexResult<<4 + 0xb;
-    else if (number%16 == 12) hexResult = hexResult<<4 + 0xc;
-    else if (number%16 == 13) hexResult = hexResult<<4 + 0xd;
-    else if (number%16 == 14) hexResult = hexResult<<4 + 0xe;
-    else hexResult = hexResult<<4 + 0xf;
+    if(number%16 <= 9) hexResult = hexResult + (number%16)<<(4*i);
+    else if (number%16 == 10) hexResult = hexResult + 0xa<<(4*i);
+    else if (number%16 == 11) hexResult = hexResult + 0xb<<(4*i);
+    else if (number%16 == 12) hexResult = hexResult + 0xc<<(4*i);
+    else if (number%16 == 13) hexResult = hexResult + 0xd<<(4*i);
+    else if (number%16 == 14) hexResult = hexResult + 0xe<<(4*i);
+    else hexResult = hexResult + 0xf<<(4*i);
     number = number >> 4;
   }
   return hexResult;
