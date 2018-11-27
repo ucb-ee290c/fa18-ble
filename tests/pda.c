@@ -36,6 +36,7 @@ uint64_t convertToHex(uint64_t number) {
     else if (number%16 == 14) hexResult = hexResult + 0xe<<(4*i);
     else hexResult = hexResult + 0xf<<(4*i);
     number = number >> 4;
+    i++;
   }
   return hexResult;
 }
