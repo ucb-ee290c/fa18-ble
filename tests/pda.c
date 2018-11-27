@@ -28,11 +28,11 @@ uint64_t convertToHex(uint64_t number) {
   uint64_t hexResult = 0x0;
   while(number) {
     if(number%16 <= 9) hexResult = hexResult<<4 + number%16;
-    else if (number%16 <= 10) hexResult = hexResult<<4 + 0xa;
-    else if (number%16 <= 10) hexResult = hexResult<<4 + 0xb;
-    else if (number%16 <= 10) hexResult = hexResult<<4 + 0xc;
-    else if (number%16 <= 10) hexResult = hexResult<<4 + 0xd;
-    else if (number%16 <= 10) hexResult = hexResult<<4 + 0xe;
+    else if (number%16 == 10) hexResult = hexResult<<4 + 0xa;
+    else if (number%16 == 11) hexResult = hexResult<<4 + 0xb;
+    else if (number%16 == 12) hexResult = hexResult<<4 + 0xc;
+    else if (number%16 == 13) hexResult = hexResult<<4 + 0xd;
+    else if (number%16 == 14) hexResult = hexResult<<4 + 0xe;
     else hexResult = hexResult<<4 + 0xf;
     number = number >> 4;
   }
