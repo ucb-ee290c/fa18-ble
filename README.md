@@ -23,22 +23,20 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 - Update PacketAssembler to new Chisel standard and connect to RocketChip
 - Build PA Chain and insert FIFOs for testing
 - Construct C tests to verify the functionality
-<br>
 
 ## Tape-in 2
 - Improve packet transmitting effeciency (delete CRC_seed and white_seed in PA input bundle)
 - Complete PA chain and the output matches software golden model
 - Similar work as tape-in1 has been done to PacketDisAssembler (PDA chain, C tests)
-<br>
 
 ## Modules
-PA: 
+1) PA: 
 [packet assembler](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pa.md), 
 [PA chain](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pa_chain.md)
-PDA: 
+2) PDA: 
 [packet disassembler](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pda.md), 
 [PDA chain](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pda_chain.md)
-Top level: 
+3) Top level: 
 [loopback](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/loopback.md)
 <br>
 
@@ -66,8 +64,6 @@ The diagram of the PA chain is shown below:
 - Add-on features like FEC mentioned in Bluetooth 5 Spec.
 
 - DMA implementation after C tests verifying the functionality
-<br>
-
 
 ### Acknowledgement
 Here is our appreciation to Prof. Borivoje Nikolic, Prof. Kristofer Pister and the GSI Paul Rigge for guiding us in this project. Their valuable suggestions and feedback help us move forward. Also the work from last semester's group inspired us greatly and here is their tape-out (https://github.com/tapeout/ble-baseband). Lastly, we would like to thank David Burnett and Rachel Zoll for helping us get on board and explain the former BLE stucture and tests.
