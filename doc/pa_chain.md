@@ -6,4 +6,4 @@ Connection among stream nodes:
 ```
 readQueue.streamNode := packet.streamNode := writeQueue.streamNode
 ```
-* `writeQueue` is the FIFO at the input side of the packet assembler. `readQueue` is the FIFo at the output side of the packet assembler. 
+* `writeQueue` is the FIFO at the input side of the packet assembler. `readQueue` is the FIFO at the output side of the packet assembler. 
