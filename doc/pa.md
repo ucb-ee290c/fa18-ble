@@ -1,5 +1,13 @@
 ﻿# Packet Assembler
- A packet assmbler collects data from different sources. Then, it utilizes CRC and whitening modules. Finally, it passes the whole packet to the next module. For the convenience of testing, the next module for `PA_chain` is an asynchronous FIFO, adn the next module for `loop` is `PDA`.
+ A packet assembler collects data and forms the packet for transmission. The Matlab golden model is given below to explain how `pdu` is constructed.
+ ```
+ pdu = [pdu_header AdvA payload1 payload2_header payload2_data]
+ ```
+ Then, it utilizes CRC and whitening modules. Finally, it passes the whole packet to the next module. The Matlab golden model is given below to explain how `packet` is constructed.
+ ```
+ packet01 = [pre_preamble bpreamble baccess_address pdu_crc_whitened]
+ ```
+For the convenience of testing, the next module for `PA_chain` is an asynchronous FIFO, and the next module for `loop` is `PDA`.
  
  
  
@@ -22,4 +30,4 @@ class PAOutputBundle extends Bundle {
 	override def cloneType: this.type = PAOutputBundle().asInstanceOf[this.type]
 }
 ```
-Packet Assembler has two outputs. `data` is an 1-bit result. `done` is an 1-bit output that notifies the end of the packet.
+Packet Assembler has two outputs. `data` is a 1-bit result. `done` is a 1-bit output that notifies the end of the packet.
