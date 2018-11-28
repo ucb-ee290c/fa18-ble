@@ -62,7 +62,7 @@ int main(void)
   //printf("PDU Length: %d", digits_data_pduData2);
  
   uint64_t done = 0;
-  uint8_t data_eight;
+  uint64_t data_eight;
   uint64_t PA_out;
   uint64_t PDA_out;
   
