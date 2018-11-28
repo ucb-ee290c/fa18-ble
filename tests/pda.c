@@ -29,51 +29,81 @@ int main(void)
     //input: pre_preamble bpreamble baccess_address pdu_crc_whitened
   uint64_t trigger = 1;
   uint64_t data_pre_preamble = 000111U;
-  uint64_t data_preamble = 0x55U;//2*4
-  uint64_t data_AA = 0X6B7D9171U;
-  uint64_t data_pdu_crc_whiten = 1111 0001 1011 1011 1000 1001 1000 0100 1111 0000 1010 1011 0010 0110 0000 1101 1110 1110 0000 1100 0010 1000 0111 0010 0111 1001 1010 0010 1000 0011 1100 1011 1010 0000 1100 0100 1110 1100 1110 1011U;//40*4
-  
+  uint64_t data_preamble = 0x55U;//2,8
+  uint64_t data_AA = 0X6B7D9171U;//8,32
+  //01101011011111011001000101110001
+  //uint64_t data_pdu_crc_whiten = 1111 0001 1011 1011 1000 1001 1000 0100 1111 0000 1010 1011 0010 0110 0000 1101 1110 1110 0000110000101000011100100111100110100010100000111100101110100000110001001110110011101011
+  uint64_t data_pduH = 0xF1BBU;//4,16
+  uint64_t data_pduAA = 0x8984F0AB230DU;//12,48
+  uint64_t data_pduData1 = 0xEE0C287279U;//10,40
+  uint64_t data_pduData2 = 0xA283CBA0U;//8,32
+  uint64_t data_crc = 0xC4ECEBU;//6,24
 
   uint8_t data;
   uint8_t PDA_out;
 
-  for (int i = 0; i < 50; i++){
+  for (int i = 0; i < 200; i++){
     if (i >= 0 && i < 8){
         data = (data_preamble >> (7-i)) & 1;
         if (i == 0) {
-            printf("pack data: %#010x \n", pack_PDABundle(1, data));
+            printf("pack data: preamble %#010x \n", pack_PDABundle(1, data));
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(1, data));
-            printf("pack data: %#010x \n", pack_PDABundle(0, data));
+            printf("pack data: preamble %#010x \n", pack_PDABundle(0, data));
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
         }
         else {
-            printf("pack data: %#010x \n", pack_PDABundle(0, data));
+            printf("pack data: preamble %#010x \n", pack_PDABundle(0, data));
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
         }
     }
     if (i >= 8 && i < 40) {
 	    data = (data_AA >> (39-i)) & 1;
-        printf("pack data: %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: AA %#010x \n", pack_PDABundle(0, data));
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
-    /*
-    if (i>=10 && i<50) {
-	data = (convertToHex(data_pdu_crc_whiten)>>(49-i+10)) & 1;
-    printf("pack data: %#010x \n", pack_PDABundle(0, data));
-    reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
-    }*/
+    if (i >= 40 && i < 56) {
+        data = (data_pduH >> (55-i)) & 1;
+        printf("pack data: pdu header %#010x \n", pack_PDABundle(0, data));
+        reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
+    }
+    if (i >= 56 && i < 104){
+        data = (data_pduAA >> (103-i)) & 1;
+        printf("pack data: pdu AA %#010x \n", pack_PDABundle(0, data));
+        reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
+    }
+    if (i >= 104 && i < 144){
+        data = (data_pduData1 >> (143-i)) & 1;
+        printf("pack data: pdu payload 1 %#010x \n", pack_PDABundle(0, data));
+        reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
+    }  
+    if (i >= 144 && i < 176){
+        data = (data_pduData2 >> (175-i)) & 1;
+        printf("pack data: pdu payload 2 %#010x \n", pack_PDABundle(0, data));
+        reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
+    }
+    if (i >= 176 && i < 200){
+        data = (data_crc >> (199-i)) & 1;
+        printf("pack data: crc %#010x \n", pack_PDABundle(0, data));
+        reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
+    }               
 
   }
 
-    while (1) {
-	PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-	if (PDA_out %2 == 0) {
-		printf("%d", PDA_out >> 14);
-    } else {
-		printf("%d\n", PDA_out >> 14);
-        break;
-    }
-    }
+    // while (1) {
+    //     PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
+    //     if (PDA_out %2 == 0) {
+    //         printf("unpack data: %#010x \n", PDA_out >> 14);
+    //     } else {
+    //         printf("unpack data: %#010x \n", PDA_out >> 14);
+    //         break;
+    //     }
+    // }
+
+    for(int i= 0; i < 25; i++)
+    {
+        PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
+        printf("unpack data: %#010x \n", PDA_out);
+    }    
     return 0;
 
 }
