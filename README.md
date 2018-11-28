@@ -37,7 +37,7 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 [packet disassembler](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda.md), 
 [PDA chain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda_chain.md)
 3) Top level: 
-[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loopback.md)
+[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loop.md)
 <br>
 
 ## Working Principle
