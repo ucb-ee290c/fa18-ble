@@ -31,13 +31,13 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 
 ## Modules
 1) PA: 
-[packet assembler](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pa.md), 
-[PA chain](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pa_chain.md)
+[packet assembler](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pa.md), 
+[PA chain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pa_chain.md)
 2) PDA: 
-[packet disassembler](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pda.md), 
-[PDA chain](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/pda_chain.md)
+[packet disassembler](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda.md), 
+[PDA chain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda_chain.md)
 3) Top level: 
-[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/blob/master/doc/loopback.md)
+[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loopback.md)
 <br>
 
 ## Working Principle
