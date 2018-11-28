@@ -9,7 +9,7 @@
 #include "mmio.h"
 
 
-uint16_t pack_PDABundle(uint8_t trigger, uint8_t data) {
+uint64_t pack_PDABundle(uint64_t trigger, uint64_t data) {
     //trigger here refers to switch actually, avoid cpp syntax conflicts
   return (trigger << 1)|data;
 }
@@ -56,8 +56,8 @@ int main(void)
   uint64_t data_pduData2 = 0xA283CBA0U;//8,32
   uint64_t data_crc = 0xC4ECEBU;//6,24
 
-  uint8_t data;
-  uint8_t PDA_out;
+  uint64_t data;
+  uint64_t PDA_out;
 
   for (int i = 0; i < 200; i++){
     if (i >= 0 && i < 8){
