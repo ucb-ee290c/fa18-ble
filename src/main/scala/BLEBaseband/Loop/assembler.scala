@@ -46,10 +46,10 @@ object PacketAssemblerIO {
 
 trait HasPeripheryPA extends BaseSubsystem {
   // instantiate cordic chain
-  val paChain = LazyModule(new PAThing)
+  val loopChain = LazyModule(new LoopThing)
   // connect memory interfaces to pbus
-  pbus.toVariableWidthSlave(Some("paWrite")) { paChain.writeQueue.mem.get }
-  pbus.toVariableWidthSlave(Some("paRead")) { paChain.readQueue.mem.get }
+  pbus.toVariableWidthSlave(Some("paWrite")) { loopChain.writeQueue.mem.get }
+  pbus.toVariableWidthSlave(Some("paRead")) { loopChain.readQueue.mem.get }
 }
 
 class PacketAssembler extends Module {

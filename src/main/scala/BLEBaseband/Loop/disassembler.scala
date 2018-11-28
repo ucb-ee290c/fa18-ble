@@ -49,10 +49,10 @@ object PacketDisAssemblerIO {
 
 trait HasPeripheryPDA extends BaseSubsystem {
   // instantiate cordic chain
-  val pdaChain = LazyModule(new PDAThing)
+  val loopChain = LazyModule(new LoopThing)
   // connect memory interfaces to pbus
-  pbus.toVariableWidthSlave(Some("pdaWrite")) { pdaChain.writeQueue.mem.get }
-  pbus.toVariableWidthSlave(Some("pdaRead")) { pdaChain.readQueue.mem.get }
+  pbus.toVariableWidthSlave(Some("pdaWrite")) { loopChain.writeQueue.mem.get }
+  pbus.toVariableWidthSlave(Some("pdaRead")) { loopChain.readQueue.mem.get }
 }
 
 class PacketDisAssembler extends Module {
