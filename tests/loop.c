@@ -63,10 +63,10 @@ int main(void)
  
   uint64_t done = 0;
   uint8_t data_eight;
-  uint8_t PA_out;
-  uint8_t PDA_out;
+  uint64_t PA_out;
+  uint64_t PDA_out;
   
-  for (int i = 0; i < 21; i++){
+  for (int i = 0; i < digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2+digits_data_pduData1/2+digits_data_pduData2/2; i++){
     if (i>=0 && i<digits_data_AA/2) {//original [0,4)
 	    data_eight = data_AA>>8*i;
         if (i==0) {
