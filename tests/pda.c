@@ -14,13 +14,30 @@ uint16_t pack_PDABundle(uint8_t trigger, uint8_t data) {
   return (trigger << 1)|data;
 }
 
-uint64_t convertToHex(uint64_t number) {
+/*uint64_t convertToHex(uint64_t number) {
   uint64_t hexResult = 0;
   uint64_t hexChar[16]={0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf}; 
   while(number) {
       hexResult = hexChar[number & 0xf] << 4 + hexResult;
       number = (unsigned) number >> 4;
 }
+  return hexResult;
+}*/
+
+uint64_t convertToHex(uint64_t number) {
+  uint64_t hexResult = 0x0;
+  int i = 0;
+  while(number) {
+    if(number%16 <= 9) hexResult = hexResult + (number%16)<<(4*i);
+    else if (number%16 == 10) hexResult = hexResult + 0xa<<(4*i);
+    else if (number%16 == 11) hexResult = hexResult + 0xb<<(4*i);
+    else if (number%16 == 12) hexResult = hexResult + 0xc<<(4*i);
+    else if (number%16 == 13) hexResult = hexResult + 0xd<<(4*i);
+    else if (number%16 == 14) hexResult = hexResult + 0xe<<(4*i);
+    else hexResult = hexResult + 0xf<<(4*i);
+    number = number >> 4;
+    i++;
+  }
   return hexResult;
 }
 
