@@ -116,10 +116,10 @@ int main(void)
     //     }
     // }
 
-    for(int i= 0; i < 25; i++)
+    for(int i= 0; i < 24; i++)
     {
         PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-        printf("unpack data: %#010x \n", PDA_out);
+        printf("unpack data: %#010x \n", PDA_out >> 14);
     }    
     return 0;
 
