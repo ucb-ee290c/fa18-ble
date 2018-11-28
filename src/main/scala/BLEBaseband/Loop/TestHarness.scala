@@ -1,7 +1,6 @@
 // See LICENSE.SiFive for license details.
 
-package PacketAssembler
-package PacketDisAssembler
+package Loop
 
 import chisel3._
 import freechips.rocketchip.config.Parameters
