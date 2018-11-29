@@ -104,14 +104,10 @@ int main(void)
     
   }
 
-    while (1) {
-	PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-	if (PDA_out %2 == 0) {
-		printf("%d", PDA_out >> 14);
-    } else {
-		printf("%d\n", PDA_out >> 14);
-        break;
-    }
+    for(int i= 0; i < 24; i++)
+    {
+        PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
+        printf("unpack data: %#010x \n", PDA_out >> 14);
     }
     return 0;
    
