@@ -116,9 +116,9 @@ class PacketDisAssembler extends Module {
 
   when(state === crc && counter === 2.U && counter_byte === 7.U && io.in.fire)
   {
-    io.out.bits.done := true.B
+    done := true.B
   }.otherwise{
-    io.out.bits.done := false.B
+    done := false.B
   }
 
   io.out.bits.length := length
@@ -127,6 +127,7 @@ class PacketDisAssembler extends Module {
   io.out.bits.flag_aa_valid := flag_aa_valid
   io.out.bits.flag_crc := flag_crc
   io.out.bits.flag_crc_valid := flag_crc_valid
+  io.out.bits.done := done
 
   io.out.valid := out_valid
   io.in.ready := in_ready
