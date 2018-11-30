@@ -63,7 +63,7 @@ int main(void)
     if (i >= 0 && i < 8){
         data = (data_preamble >> (7-i)) & 1;
         if (i == 0) {
-            printf("pack data: preamble %#001x \n", data);
+            //printf("pack data: preamble %#001x \n", data);
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(1, data));
             printf("pack data: preamble %#001x \n", data);
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
@@ -113,20 +113,21 @@ int main(void)
             printf("unpack data: %#002x \n", PDA_out >> 14);
         } else {
             printf("unpack data: %#002x \n", PDA_out >> 14);
-            if((PDA_out >> 1) % 2 == 0){
+            if((PDA_out >> 1) % 2 == 1){
                 if((PDA_out >> 2) % 2 == 0){
-                    printf("CRC Valid");
+                    printf("CRC Valid\n");
                 }else{
-                    printf("CRC Invalid");
+                    printf("CRC Invalid\n");
                 }
             }
-            if((PDA_out >> 3) % 2 == 0){
+            if((PDA_out >> 3) % 2 == 1){
                 if((PDA_out >> 4) % 2 == 0){
-                    printf("AA Valid");
+                    printf("AA Valid\n");
                 }else{
-                    printf("AA Invalid");
+                    printf("AA Invalid\n");
                 }
             }
+            printf("Finished disassembling \n");
             break;
         }
     }
