@@ -63,64 +63,79 @@ int main(void)
     if (i >= 0 && i < 8){
         data = (data_preamble >> (7-i)) & 1;
         if (i == 0) {
-            printf("pack data: preamble %#010x \n", pack_PDABundle(1, data));
+            printf("pack data: preamble %#001x \n", data);
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(1, data));
-            printf("pack data: preamble %#010x \n", pack_PDABundle(0, data));
+            printf("pack data: preamble %#001x \n", data);
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
         }
         else {
-            printf("pack data: preamble %#010x \n", pack_PDABundle(0, data));
+            printf("pack data: preamble %#001x \n", data);
             reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
         }
     }
     if (i >= 8 && i < 40) {
 	    data = (data_AA >> (39-i)) & 1;
-        printf("pack data: AA %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: AA %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
     if (i >= 40 && i < 56) {
         data = (data_pduH >> (55-i)) & 1;
-        printf("pack data: pdu header %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: pdu header %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
     if (i >= 56 && i < 104){
         data = (data_pduAA >> (103-i)) & 1;
-        printf("pack data: pdu AA %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: pdu AA %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
     if (i >= 104 && i < 144){
         data = (data_pduData1 >> (143-i)) & 1;
-        printf("pack data: pdu payload 1 %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: pdu payload 1 %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }  
     if (i >= 144 && i < 176){
         data = (data_pduData2 >> (175-i)) & 1;
-        printf("pack data: pdu payload 2 %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: pdu payload 2 %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }
     if (i >= 176 && i < 200){
         data = (data_crc >> (199-i)) & 1;
-        printf("pack data: crc %#010x \n", pack_PDABundle(0, data));
+        printf("pack data: crc %#001x \n", data);
         reg_write64(PACKET_DISASSEMBLER_WRITE, pack_PDABundle(0, data));
     }               
 
   }
 
-    // while (1) {
-    //     PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-    //     if (PDA_out %2 == 0) {
-    //         printf("unpack data: %#010x \n", PDA_out >> 14);
-    //     } else {
-    //         printf("unpack data: %#010x \n", PDA_out >> 14);
-    //         break;
-    //     }
-    // }
 
-    for(int i= 0; i < 24; i++)
-    {
+    while (1) {
         PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-        printf("unpack data: %#010x \n", PDA_out >> 14);
-    }    
+        if (PDA_out %2 == 0) {
+            printf("unpack data: %#002x \n", PDA_out >> 14);
+        } else {
+            printf("unpack data: %#002x \n", PDA_out >> 14);
+            if((PDA_out >> 1) % 2 == 0){
+                if((PDA_out >> 2) % 2 == 0){
+                    printf("CRC Valid");
+                }else{
+                    printf("CRC Invalid");
+                }
+            }
+            if((PDA_out >> 3) % 2 == 0){
+                if((PDA_out >> 4) % 2 == 0){
+                    printf("AA Valid");
+                }else{
+                    printf("AA Invalid");
+                }
+            }
+            break;
+        }
+    }
+
+    // for(int i= 0; i < 24; i++)
+    // {
+    //     PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
+    //     printf("unpack data: %#002x \n", PDA_out >> 14);
+    // }    
     return 0;
 
 }
