@@ -143,7 +143,7 @@ class PacketAssembler extends Module {
 		io.out.bits.done := false.B
 	}
 	
-        when(state === idle && io.in.bits.trigger == true.B &&& io.in.valid){//added specifically for Loop
+        when(state === idle && io.in.bits.trigger === true.B && io.in.valid){//added specifically for Loop
 		io.out.bits.start := true.B
         }.otherwise{
 		io.out.bits.start := false.B
