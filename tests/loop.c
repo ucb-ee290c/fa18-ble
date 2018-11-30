@@ -13,8 +13,8 @@
 
 #include "mmio.h"
 
-uint16_t pack_PABundle(uint8_t trigger, uint8_t data) {
-  return (trigger << 8)|data;
+uint16_t pack_PABundle(uint8_t trigger, uint8_t data, uint8_t done) {
+  return (trigger << 9)|(data<<1)|done;
 }
 
 int getDigits(uint64_t number) { //count the number of digits for each data. e.g, data_AA should be 8.

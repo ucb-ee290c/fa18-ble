@@ -8,8 +8,9 @@ import freechips.rocketchip.diplomacy.LazyModule
 import freechips.rocketchip.subsystem.BaseSubsystem
 
 class PDAInputBundle extends Bundle {
-	    val switch = Output(Bool())
+      val switch = Output(Bool())
       val data = Output(UInt(1.W))//decouple(source): data, pop, empty
+      val finish = Output(Bool())//added specifically for Loop
 
 	override def cloneType: this.type = PDAInputBundle().asInstanceOf[this.type]
 }
@@ -131,7 +132,7 @@ class PacketDisAssembler extends Module {
   io.out.valid := out_valid
   io.in.ready := in_ready
 
-
+  //state transition  
   when(state === idle){
     when(io.in.bits.switch === true.B && io.in.valid){//note: switch usage
       state := preamble

@@ -22,6 +22,7 @@ object PAInputBundle {
 }
 
 class PAOutputBundle extends Bundle {
+        val start = Output(Bool())// newly add specifically for Loop
 	val data = Output(UInt(1.W))
 	val done = Output(Bool())
 
@@ -142,6 +143,12 @@ class PacketAssembler extends Module {
 		io.out.bits.done := false.B
 	}
 	
+        when(state === idle && io.in.bits.trigger == true.B &&& io.in.valid){//added specifically for Loop
+		io.out.bits.start := true.B
+        }.otherwise{
+		io.out.bits.start := false.B
+        }
+
 	//State Transition with counter updates
 	when(state === idle){
 		when(io.in.bits.trigger === true.B && io.in.valid){
