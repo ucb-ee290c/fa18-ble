@@ -114,7 +114,7 @@ class PacketDisAssembler extends Module {
     io.out.bits.data := data.asUInt
   }
 
-  when(state === wait_dma && io.out.ready)
+  when(state === crc && counter === 2.U && counter_byte === 7.U && io.in.fire)
   {
     io.out.bits.done := true.B
   }.otherwise{
