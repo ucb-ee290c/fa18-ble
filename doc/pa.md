@@ -1,5 +1,8 @@
 ﻿# Packet Assembler
- A packet assembler collects data and forms the packet for transmission. The Matlab golden model is given below to explain how `pdu` is constructed.
+ A packet assembler collects data and forms the packet for transmission. In **assembler.scala**, the BLE baseband was updated to accommodate to new Chisel standard (wrap PA Block as lazyModule in PAChain). The biggest improvement of design is that: in the former implementation, each packet("PABundle") includes *trigger* (1 bit, denotes the beginning of a BLE packet), *data* (8 bits, the contents of BLE packets) *crc_seed* (24 bits), *white_seed* (7 bits), and *done* (1 bit, denotes the end of a BLE packet). Thus each time when transmitting, the effective payload takes up only 8 bits out of 41 and most parts are repetitive for a single BLE packet. We improved the Bundle structure to include only *trigger* and *data*. The transmission is achieved with a FSM which holds 6 stages: idle, preamble, access address, PDU_header, PDU_payload, CRC. Several modifications were done for proper state transitions.
+ 
+ 
+ The Matlab golden model is given below to explain how `pdu` is constructed.
  ```
  pdu = [pdu_header AdvA payload1 payload2_header payload2_data]
  ```
@@ -8,8 +11,8 @@
  packet01 = [pre_preamble bpreamble baccess_address pdu_crc_whitened]
  ```
 For the convenience of testing, the next module for `PA_chain` is an asynchronous FIFO, and the next module for `loop` is `PDA`.
- 
- 
+
+
  
  ## Input and Output Ports
  ```
