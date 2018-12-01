@@ -110,7 +110,7 @@ abstract class ReadQueue
 }
 
 
-class TLReadQueue
+class TLReadQueue 
 (
   depth: Int = 8,
   csrAddress: AddressSet = AddressSet(0x2100, 0xff),
@@ -129,13 +129,14 @@ class TLReadQueue
 
 }
 
-abstract class TransitionQueue
+abstract class TransitionQueue [D, U, EO, EI, B <: Data]
 (
-  val depth: Int = 8,
-  val streamParameters: AXI4StreamMasterParameters = AXI4StreamMasterParameters()
-)(implicit p: Parameters) extends LazyModule with HasCSR {
+  val depth: Int = 8
+  //val streamParameters: AXI4StreamMasterParameters = AXI4StreamMasterParameters()
+)(implicit p: Parameters) extends DspBlock[D, U, EO, EI, B] {
   // stream node, output only
-  val streamNode = AXI4StreamMasterNode(streamParameters)
+  val streamNode = AXI4StreamIdentityNode()
+  val mem = None
 
   lazy val module = new LazyModuleImp(this) {
     require(streamNode.out.length == 1 && streamNode.in.length == 1)
@@ -172,24 +173,27 @@ abstract class TransitionQueue
   }
 }
 
+class TLTransitionQueue(depth: Int = 8)(implicit p: Parameters)extends
+  TransitionQueue[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle] with TLDspBlock
 
-class TLTransitionQueue
-(
-  depth: Int = 8,
-  csrAddress: AddressSet = AddressSet(0x2200, 0xff),
-  beatBytes: Int = 8,
-)(implicit p: Parameters) extends TransitionQueue(depth) with TLHasCSR {
-  val devname = "tlQueueTransition"
-  val devcompat = Seq("ucb-art", "dsptools")
-  val device = new SimpleDevice(devname, devcompat) {
-    override def describe(resources: ResourceBindings): Description = {
-      val Description(name, mapping) = super.describe(resources)
-      Description(name, mapping)
-    }
-  }
-  // make diplomatic TL node for regmap
-  override val mem = Some(TLRegisterNode(address = Seq(csrAddress), device = device, beatBytes = beatBytes))
-}
+
+// class TLTransitionQueue
+// (
+//   depth: Int = 8,
+//   csrAddress: AddressSet = AddressSet(0x2200, 0xff),
+//   beatBytes: Int = 8,
+// )(implicit p: Parameters) extends TransitionQueue(depth) with TLHasCSR {
+//   val devname = "tlQueueTransition"
+//   val devcompat = Seq("ucb-art", "dsptools")
+//   val device = new SimpleDevice(devname, devcompat) {
+//     override def describe(resources: ResourceBindings): Description = {
+//       val Description(name, mapping) = super.describe(resources)
+//       Description(name, mapping)
+//     }
+//   }
+//   // make diplomatic TL node for regmap
+//   //override val mem = Some(TLRegisterNode(address = Seq(csrAddress), device = device, beatBytes = beatBytes))
+// }
 
 
 abstract class PABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extends DspBlock[D, U, EO, EI, B] {
