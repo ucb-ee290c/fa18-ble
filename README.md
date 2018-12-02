@@ -80,13 +80,15 @@ Reserved for future use in Spec v.05.
 #### Length
 Indicate the size of payload in bytes/octets. The length should be larger than 6 (reserved for advertising address) and less than 37. For example, if we have 6 for address, 3 for headers, 6 for payload, then PDU_length is 15. Similar to AA, the transmition start with LSB, so length 15 is 11110000 to keep the correct order.
 
-### Advertising Address
-Here defined the advertiser MAC address. In this project, AdvA is set to 0x90d7ebb19299, which randomly copied from http://processors.wiki.ti.com/index.php/BLE_sniffer_guide. This should also follow LSB-first transmission.
 
 ### Payload
 ![blockDiagram](doc/image/payload.png)
 
-There are two sections with the payload. The payload1 is 0x02 (length), 0x01 (“flags”), 0x05 (flag data). The payload2 is 0x05 (length), type 0x08 (“short name”), data 0x32 0x39 0x30 0x43(ASCII code for “290C”).
+There are three sections within the payload we used, which are advertising address and two advertising data (denoted as payload1 and payload2).
+#### Advertising Address
+Here defined the advertiser MAC address. In this project, AdvA is set to 0x90d7ebb19299. This should also follow LSB-first transmission order.
+#### Advertising Data
+The payload1 is 0x02 (length), 0x01 (“flags”), 0x05 (flag data). The payload2 is 0x05 (length), type 0x08 (“short name”), data 0x32 0x39 0x30 0x43(ASCII code for “290C”).
 
 ### CRC
 For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md) and [whitening](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md).
@@ -95,10 +97,6 @@ For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-b
 ### Noted:
 BLE Spec has an explanation about whether we have to reverse the bit sequence: "Multi-octet fields, with the exception of the Cyclic Redundancy Check (CRC) and the Message Integrity Check (MIC), shall be transmitted with the least significant octet first. Each octet within multi-octet fields, with the exception of the CRC (see Section 3.1.1), shall be transmitted in LSB first order. For example, the 48-bit addresses in the advertising channel PDUs shall be transmitted with the least significant octet first, followed by the remainder of the five octets in increasing order."
 
-
-## Tests
-1. how to test
-2. test results
 
 ## TODO
 - Add-on features like FEC mentioned in Bluetooth 5 Spec
