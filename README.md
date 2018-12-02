@@ -39,9 +39,9 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 3) Top level: 
 [loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loop.md)
 4) CRC: 
-[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md)
+[CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md)
 5) Whitening: 
-[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md)
+[Whitening](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md)
 <br>
 
 ## Working Principle
