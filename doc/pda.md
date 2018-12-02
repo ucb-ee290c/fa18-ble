@@ -1,5 +1,5 @@
 ﻿# Packet DisAssembler
-The packet disassembler is a finite state machine that receives dataThe 1-bit output of PA chain would be fed back into the packet disassembler for processing. Then, it has two tasks: utilize CRC and de-whitening modules; check AA and CRC. Finally, it passes the whole packet to the next module. For the convenience of testing, the next module for `PDA_chain` is also an asynchronous FIFO.
+The packet disassembler is a finite state machine that receives data and sends it back to CPU. The 1-bit output of PA chain would be fed back into the packet disassembler for processing. Then, it has two tasks: utilize CRC and de-whitening modules; check AA and CRC. Finally, it passes the whole packet to the next module. For the convenience of testing, the next module for `PDA_chain` is also an asynchronous FIFO.
  
  
  
