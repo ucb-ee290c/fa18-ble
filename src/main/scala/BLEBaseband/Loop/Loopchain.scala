@@ -174,7 +174,7 @@ abstract class TransitionQueue [D, U, EO, EI, B <: Data]
 }
 
 class TLTransitionQueue(depth: Int = 8)(implicit p: Parameters)extends
-  TransitionQueue[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle] with TLDspBlock
+  TransitionQueue[TLClientPortParameters, TLManagerPortParameters, TLEdgeOut, TLEdgeIn, TLBundle](depth) with TLDspBlock
 
 
 // class TLTransitionQueue

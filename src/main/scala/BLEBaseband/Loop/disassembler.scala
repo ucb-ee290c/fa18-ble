@@ -130,7 +130,12 @@ class PacketDisAssembler extends Module {
   io.out.bits.flag_crc_valid := flag_crc_valid
 
   io.out.valid := out_valid
-  io.in.ready := in_ready
+  //io.in.ready := in_ready
+  when(data.asUInt === preamble01 && state === preamble){
+    io.in.ready := false.B
+  }.otherwise{
+    io.in.ready := in_ready
+  }
 
   //state transition  
   when(state === idle){
@@ -301,7 +306,7 @@ class PacketDisAssembler extends Module {
     }
   }
 
-  //AFIFO_Ready_w//note:check corner cases
+  //in_ready//note:check corner cases
   when(state === idle){
     in_ready := false.B
   }.elsewhen(state === preamble){
