@@ -32,14 +32,16 @@ int getDigits(uint64_t number) { //count the number of digits for each data. e.g
 int main(void)
 {
   uint64_t trigger = 1;
-  uint64_t data_AA = 0x8E89BED6U;
-//  uint64_t data_pduH = 0x1002U;
-  uint64_t data_pduH = 0x0F02U;  //first two hex numbers indicate the length of payload
-  uint64_t data_pduAA = 0x0002723280C6U;
-  uint64_t data_pduData1 = 0x0806050102U; //payload 1
-//  uint64_t data_pduData2 = 0x334D554353U; 
-  uint64_t data_pduData2 = 0x43303932U; //payload 2
-  
+  uint64_t data_AA = 0x8E89BED6U; //access address, constant
+//  uint64_t data_pduH = 0x0F02U;  //first two hex numbers indicate the length of payload
+  uint64_t data_pduH = 0x1502U; 
+  uint64_t data_pduAA = 0x0002723280C6U; //advertising address, constant
+  uint64_t data_pduData1 = 0x050102U; //payload 1, constant
+//  uint64_t data_pduData2 = 0x433039320805U; //payload 2
+  uint64_t data_pduData2 = 0x61726F420805U; //payload 2
+
+
+
   //interactive interface (optional)
 //   printf("Enter data_AA in hex: (End with U)");
 //   scanf("%x", &data_AA);
@@ -55,13 +57,12 @@ int main(void)
   int digits_data_AA = 8;
   int digits_data_pduH = 4;
   int digits_data_pduAA = 12;
-  int digits_data_pduData1 = 10;
+  int digits_data_pduData1 = 6;
   int digits_data_pduData2 = getDigits(data_pduH) - digits_data_pduAA - digits_data_pduData1; //Use the leftmost two hex to calculate total digits of pdu
   //int digits_data_pduData2 = 8;
 
   //printf("PDU Length: %d", digits_data_pduData2);
  
-  uint64_t done = 0;
   uint64_t data_eight;
   uint64_t PA_out;
   uint64_t PDA_out;
