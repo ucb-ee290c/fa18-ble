@@ -5,16 +5,16 @@
 
 #define PACKET_DISASSEMBLER_WRITE 0x200c
 #define PACKET_DISASSEMBLER_WRITE_COUNT 0x2010
-#define PACKET_DISASSEMBLER_READ 0x210c
-#define PACKET_DISASSEMBLER_READ_COUNT 0x2110
+#define PACKET_DISASSEMBLER_READ 0x2100
+#define PACKET_DISASSEMBLER_READ_COUNT 0x2108
 
 #include <stdio.h>
 #include <inttypes.h>
 
 #include "mmio.h"
 
-uint16_t pack_PABundle(uint8_t trigger, uint8_t data, uint8_t done) {
-  return (trigger << 9)|(data<<1)|done;
+uint16_t pack_PABundle(uint8_t trigger, uint8_t data) {
+  return (trigger << 8) | data;
 }
 
 int getDigits(uint64_t number) { //count the number of digits for each data. e.g, data_AA should be 8.
@@ -70,35 +70,35 @@ int main(void)
     if (i>=0 && i<digits_data_AA/2) {//original [0,4)
 	    data_eight = data_AA>>8*i;
         if (i==0) {
-            printf("pack data: %#010x \n", pack_PABundle(1, data_eight));
+            //printf("pack data: %#002x \n", pack_PABundle(1, data_eight));
             reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(1, data_eight));
-            printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+            printf("pack data: %#002x \n", pack_PABundle(0, data_eight));            
             reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
         }
         else {
-            printf("pack data: %#010x \n", pack_PABundle(0, data_eight));
+            printf("pack data: %#002x \n", pack_PABundle(0, data_eight));
             reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
         }
     }
     
     if (i>=digits_data_AA/2 && i<digits_data_AA/2+digits_data_pduH/2) {//original [4,6)
 	data_eight = data_pduH>>8*(i-digits_data_AA/2);
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    printf("pack data: %#002x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));    
     }
     if (i>=digits_data_AA/2+digits_data_pduH/2 && i<digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2) {//original [6,12)
 	data_eight = data_pduAA>>8*(i-(digits_data_AA/2+digits_data_pduH/2));
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    printf("pack data: %#002x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
     if (i>=digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2 && i<digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2+digits_data_pduData1/2) {//original [12,17)
     data_eight = data_pduData1>>8*(i-(digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2));
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    printf("pack data: %#002x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
     if (i>=digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2+digits_data_pduData1/2 && i<digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2+digits_data_pduData1/2+digits_data_pduData2/2) {
 	data_eight = data_pduData2>>8*(i-(digits_data_AA/2+digits_data_pduH/2+digits_data_pduAA/2+digits_data_pduData1/2));//original [17,21)
-    printf("pack data: %#010x \n", pack_PABundle(0, data_eight));            
+    printf("pack data: %#002x \n", pack_PABundle(0, data_eight));            
     reg_write64(PACKET_ASSEMBLER_WRITE, pack_PABundle(0, data_eight));
     }
     
@@ -107,7 +107,7 @@ int main(void)
     for(int i= 0; i < 24; i++)
     {
         PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-        printf("unpack data: %#010x \n", PDA_out >> 14);
+        printf("unpack data: %#002x \n", PDA_out);
     }
     return 0;
    
