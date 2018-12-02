@@ -36,12 +36,12 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 2) PDA: 
 [packet disassembler](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda.md), 
 [PDA chain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda_chain.md)
-3) Top level: 
-[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loop.md)
-4) CRC: 
+3) CRC: 
 [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md)
-5) Whitening: 
+4) Whitening: 
 [Whitening](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md)
+5) Top level: 
+[loopback](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/loop.md)
 <br>
 
 ## Working Principle
