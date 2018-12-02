@@ -59,6 +59,7 @@ Below is an overall diagram of the BLE packet structure. As specified in Bluetoo
 
 ### Preamble
 For LE 1M packet, the preamble is determined by the last bit of access address (AA). It should be noted here, since the AA sequence has to be flipped for transmitting, the bit we actually look at is the first bit in the AA field (if 0, preamble is 01010101; if 1, preamble is 10101010).
+
 ![blockDiagram](doc/image/preamble.png)
 
 ### Access Address
@@ -66,19 +67,19 @@ The standard AA for broadcasting is 0x8E89BED6. Thus the encoded AA is 0110_1011
 Matlab code demonstration: ``fliplr(dec2bin(hex2dec('8E89BED6'),32))``
 
 ### Header
-The PDU header contains 6 parts: PDU type, RFU, RxAdd, TxAdd, ChSel and Length
+The PDU header contains 6 parts: PDU type, RFU, RxAdd, TxAdd, ChSel and Length.
 ![blockDiagram](doc/image/pdu_header.png)
 #### PDU type
-Our project adopts `ADV_NONCONN_IND` in LE 1M packet implementaion
+Our project adopts `ADV_NONCONN_IND` in LE 1M packet implementaion.
 ![blockDiagram](doc/image/pdu_type.png)
 #### RFU
-Reserved for future use in Spec v.05
+Reserved for future use in Spec v.05.
 #### RxAdd, TxAdd
 0 means public address, 1 means randomized address. Set both to 0 in this project. 
 #### ChSel
-Not used in this project
+Not used in this project.
 #### Length
-Indicate the size of payload in bytes/octets. The length should be larger than 6 (reserved for advertising address) and less than 37. For example, if we have 6 for address, 3 for headers, 6 for payload, then PDU_length is 15. Similar to AA, the transmition start with LSB, so length 15 is 11110000 to keep the correct order
+Indicate the size of payload in bytes/octets. The length should be larger than 6 (reserved for advertising address) and less than 37. For example, if we have 6 for address, 3 for headers, 6 for payload, then PDU_length is 15. Similar to AA, the transmition start with LSB, so length 15 is 11110000 to keep the correct order.
 
 ### CRC
 For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md).
