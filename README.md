@@ -12,6 +12,7 @@ This Documentation is for Bluetooth Low Energy (BLE) Baseband group work in EE29
 The BLE baseband we implemented includes two main blocks: packet assmebler (PA) and disassmbler (PDA), which are responsible for TX and RX sides respectively. Two submodules, CRC and (de)whitening, are attached to PA/PDA to follow Bluetooth Specification v5.0. The final goal is to implement a complete BLE baseband loop chain. 
 
 The diagram of the expected BLE loop chain is shown below:
+
 ![blockDiagram](doc/image/loopback_chain.png)
 <br>
 
@@ -76,13 +77,20 @@ Our project adopts `ADV_NONCONN_IND` in LE 1M packet implementaion.
 Reserved for future use in Spec v.05.
 #### RxAdd, TxAdd
 0 means public address, 1 means randomized address. Set both to 0 in this project. 
-#### ChSel
-Not used in this project.
 #### Length
 Indicate the size of payload in bytes/octets. The length should be larger than 6 (reserved for advertising address) and less than 37. For example, if we have 6 for address, 3 for headers, 6 for payload, then PDU_length is 15. Similar to AA, the transmition start with LSB, so length 15 is 11110000 to keep the correct order.
 
+### Advertising Address
+Here defined the advertiser MAC address. In this project, AdvA is set to 0x90d7ebb19299, which randomly copied from http://processors.wiki.ti.com/index.php/BLE_sniffer_guide. This should also follow LSB-first transmission.
+
+### Payload
+![blockDiagram](doc/image/payload.png)
+
+There are two sections with the payload. The payload1 is 0x02 (length), 0x01 (“flags”), 0x05 (flag data). The payload2 is 0x06 (length), type 0x08 (“short name”), data 0x32 0x39 0x30 0x43(ASCII code for “290C”).
+
 ### CRC
-For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md).
+For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md) and [whitening](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md).
+
 
 ### Noted:
 BLE Spec has an explanation about whether we have to reverse the bit sequence: "Multi-octet fields, with the exception of the Cyclic Redundancy Check (CRC) and the Message Integrity Check (MIC), shall be transmitted with the least significant octet first. Each octet within multi-octet fields, with the exception of the CRC (see Section 3.1.1), shall be transmitted in LSB first order. For example, the 48-bit addresses in the advertising channel PDUs shall be transmitted with the least significant octet first, followed by the remainder of the five octets in increasing order."
