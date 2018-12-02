@@ -86,7 +86,7 @@ Here defined the advertiser MAC address. In this project, AdvA is set to 0x90d7e
 ### Payload
 ![blockDiagram](doc/image/payload.png)
 
-There are two sections with the payload. The payload1 is 0x02 (length), 0x01 (“flags”), 0x05 (flag data). The payload2 is 0x06 (length), type 0x08 (“short name”), data 0x32 0x39 0x30 0x43(ASCII code for “290C”).
+There are two sections with the payload. The payload1 is 0x02 (length), 0x01 (“flags”), 0x05 (flag data). The payload2 is 0x05 (length), type 0x08 (“short name”), data 0x32 0x39 0x30 0x43(ASCII code for “290C”).
 
 ### CRC
 For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md) and [whitening](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/whitening.md).
