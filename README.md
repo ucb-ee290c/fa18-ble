@@ -84,6 +84,9 @@ Indicate the size of payload in bytes/octets. The length should be larger than 6
 ### CRC
 For this part, please refer to [CRC](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/crc.md).
 
+### Noted:
+BLE Spec has an explanation about whether we have to reverse the bit sequence: "Multi-octet fields, with the exception of the Cyclic Redundancy Check (CRC) and the Message Integrity Check (MIC), shall be transmitted with the least significant octet first. Each octet within multi-octet fields, with the exception of the CRC (see Section 3.1.1), shall be transmitted in LSB first order. For example, the 48-bit addresses in the advertising channel PDUs shall be transmitted with the least significant octet first, followed by the remainder of the five octets in increasing order."
+
 
 ## Tests
 1. how to test
