@@ -4,7 +4,7 @@ A whitening module is used to prevent long sequences of zeros or ones. It is per
 
 Whitening and de-whitening is achieved using a 7-bit Linear Feedback Shift Register (LFSR). The shift register is initialized in the following manner:
 * Position 0 is set to 1
-* Positions 1 to 6 is set to the channel index of the transmitting/receiving channel, with the most significant bit set to position 1 and the least significant bit set to position 6. In our case, the channel index is 0x25, so the shift register is initialized to 1100101.
+* Positions 1 to 6 is set to the channel index of the transmitting/receiving channel, with the most significant bit set to position 1 and the least significant bit set to position 6. In this case, the channel index is 0x25, so the shift register is initialized to 1100101.
 
 ![whitening_lfsr](image/whitening_lfsr.png)
 
@@ -22,3 +22,8 @@ There is a subtle but important difference in the LFSR of whitening/dewhitening 
 }
  ```
  Like a CRC module, a whitening has three inputs and one output. `init` is a 1-bit input sent by the packet assembler as the signal of the beginning of the sequence. `seed` is a 7-bit input that CRC module needs to load to the corresponding registers. `operand` is a 1-bit input for bits to perform certain operations. `result` is a 1-bit output produced by whitening and taken by the packet assembler. 
+
+## Test
+A scala unit test is provided for the whitening module. To perform the unit test, type `sbt` in the root directory. After that, type `testOnly Whitening_test.WhiteningTester` in the sbt terminal.
+
+Similar to the CRC module, the whitening module is also used extensively in the packet assmebler/packet disassembler, and can be tested against the software golden model in the overall test.
