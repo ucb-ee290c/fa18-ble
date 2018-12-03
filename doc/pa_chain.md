@@ -20,6 +20,8 @@ PROJECT ?= PacketAssembler
 ```
 PROGRAMS = pa
 ```
+* Then type `make` in the tests folder to generate the .riscv file corresponding to the pa.c code.
+
 * Go back to folder `fa18-ble/verisim` and type `make debug` to apply the TestHarness and create the executable for the C tester file.
 * The last step is to type 
 ```
