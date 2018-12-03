@@ -2,9 +2,9 @@
 A whitening module is used to prevent long sequences of zeros or ones. It is performed similar to a CRC despite some subtle difference. According to the Bluetooth spec, whitening is applied to PDU and CRC fields and is performed after CRC in the packet assembler, and dewhitening is applied similarly before CRC in the packet disassembler.
 ![whitening](image/whitening.png)
 
-Whitening and de-whitening is achieved using a 7-bit Linear Feedback Shift Register (LFSR). The shift register is initialized using the channel index in the following manner:
+Whitening and de-whitening is achieved using a 7-bit Linear Feedback Shift Register (LFSR). The shift register is initialized in the following manner:
 * Position 0 is set to 1
-* Positions 1 to 6 is set to the channel index, with the most significant bit set to position 1 and the least significant bit set to position 6. In our case, the channel index is 0x25, so the shift register is initialized to 1100101.
+* Positions 1 to 6 is set to the channel index of the transmitting/receiving channel, with the most significant bit set to position 1 and the least significant bit set to position 6. In our case, the channel index is 0x25, so the shift register is initialized to 1100101.
  
  ## Input and Output Ports
  ```
