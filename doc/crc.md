@@ -5,7 +5,9 @@ According to Bluetooth Spec v.05, "for every Data Channel PDU, the shift registe
 
 ![blockDiagram](image/lfsr_crc.png) 
 
-When initializing, position 0 of the LFSR is set as the least significant bit, and position 23 of the LFSR is the most significant bit. One thing to note is that the CRC is transmitted most significant bit first (from position 23 to position 0), which is different from other parts of the BLE packet.
+When initializing, position 0 of the LFSR is set as the least significant bit, and position 23 of the LFSR is the most significant bit. In the packet assembler and packet disassembler, starting from the PDU header, the lfsr takes in one input bit per clock cycle, shift the existing bits to the right, and perform xor logic operation on some of the bits (denoted as taps).
+
+One thing to note is that the CRC is transmitted most significant bit first (from position 23 to position 0), which is different from other parts of the BLE packet.
  
  ## Input and Output Ports
  ```
