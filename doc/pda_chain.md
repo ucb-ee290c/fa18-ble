@@ -31,3 +31,11 @@ to run the project on the RocketChip.
 ```
 ./simulator-freechips.rocketchip.system-DefaultConfig-debug -vout.vcd ../tests/pda.riscv
 ```
+
+## Results
+This test takes in the output of the [PAChain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pa_chain.md), disassembles the packet, and check if the packet is compromised by comparing AA and CRC with reference values. 
+Here is an exemplary output:
+
+The C code will also produce error messages when either the CRC or the AA values are wrong. For example, if we deliberately alter the CRC input, the disassembler will find out and throw a flag:
+[wrong](image/disassembler_wrong.png)
+
