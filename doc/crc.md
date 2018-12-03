@@ -21,3 +21,7 @@ class Serial_CRC extends Module {
 }
  ```
 A CRC module has three inputs and one output. `init` is a 1-bit input sent by the packet assembler as the signal of the beginning of the sequence. `seed` is a 24-bit input that CRC module needs to load to the corresponding registers. `operand` is a 1-bit input for bits to perform certain operations. `result` is a 24-bit output produced by CRC and taken by the packet assembler.  
+
+## Test
+
+A simple scala test is provided for the crc module. To perform the unit test, type `sbt` in the root directory. After that, type `testOnly CRC_test.Serial_CRCTester` in the sbt terminal.
