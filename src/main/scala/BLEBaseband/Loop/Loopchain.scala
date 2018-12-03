@@ -245,7 +245,7 @@ abstract class PDABlock[D, U, EO, EI, B <: Data] (implicit p: Parameters) extend
     out.valid := packet.io.out.valid
     packet.io.out.ready := out.ready
 
-    out.bits.data := packet.io.out.bits.data.asUInt()
+    out.bits.data := packet.io.out.bits.asUInt()
   }
 }
 
