@@ -33,8 +33,7 @@ int main(void)
 {
   uint64_t trigger = 1;
   uint64_t data_AA = 0x8E89BED6U; //access address, constant
-//  uint64_t data_pduH = 0x0F02U;  //first two hex numbers indicate the length of payload
-  uint64_t data_pduH = 0x1502U; 
+  uint64_t data_pduH = 0x0F02U;  //first two hex numbers indicate the length of payload
   uint64_t data_pduAA = 0x0002723280C6U; //advertising address, constant
   uint64_t data_pduData1 = 0x050102U; //payload 1, constant
 //  uint64_t data_pduData2 = 0x433039320805U; //payload 2
@@ -105,11 +104,34 @@ int main(void)
     
   }
 
-    for(int i= 0; i < 24; i++)
-    {
+    while (1) {
         PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
-        printf("unpack data: %#002x \n", PDA_out);
+        if (PDA_out %2 == 0) {
+            printf("unpack data: %#002x \n", PDA_out >> 11);
+            if((PDA_out >> 1) % 2 == 1){
+                printf("CRC Invalid\n");
+            }
+            if((PDA_out >> 2) % 2 == 1){
+                printf("AA Invalid\n");
+            }
+        } else {
+            printf("unpack data: %#002x \n", PDA_out >> 11);
+            if((PDA_out >> 1) % 2 == 1){
+                printf("CRC Invalid\n");
+            }
+            if((PDA_out >> 2) % 2 == 1){
+                printf("AA Invalid\n");
+            }
+            printf("Finished disassembling \n");
+            break;
+        }
     }
+
+    // for(int i= 0; i < 24; i++)
+    // {
+    //     PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
+    //     printf("unpack data: %#002x \n", PDA_out);
+    // }
     return 0;
    
 }
