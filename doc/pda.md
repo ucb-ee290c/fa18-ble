@@ -30,3 +30,5 @@ Packet DisAssembler has two inputs. `switch` denotes the beginning of the packet
 ```
 Packet DisAssembler has eight outputs. `data` is an 8-bit result. `done` is a 1-bit output that denotes the end of the packet. The rest outputs are needed for PDA processing but not part of the payload information.
 
+ ## Test
+ Due to time constraints, we did not build a Scala test for the Packet DisAssembler module. In return, a top level test is provided for PDA chain. Please refer to [here](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pda_chain.md).
