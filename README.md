@@ -54,7 +54,7 @@ Jerry Duan, Mingying Xie, and Yalun Zheng
 <br>
 
 ## Working Principle
-Below is an overall diagram of the BLE packet structure. As specified in Bluetooth Specification v5.0, the BLE packet includes Preamble, Access Address, PDU (header, advertising address and payload), and CRC.
+Below is an overall diagram of the BLE packet structure. As specified in Bluetooth Specification v5.0, the BLE packet includes Preamble, Access Address, PDU (header and payload), and CRC.
 
 ![blockDiagram](doc/image/ble_packet_detail.png)
 
@@ -67,12 +67,13 @@ For LE 1M packet, the preamble is determined by the last bit of access address (
 The standard AA for broadcasting is 0x8E89BED6. Thus the encoded AA is 0110_1011_0111_1101_1001_0001_0111_0001.
 Matlab code demonstration: ``fliplr(dec2bin(hex2dec('8E89BED6'),32))``
 
-### Header
+### PDU: Header
 The PDU header contains 6 parts: PDU type, RFU, RxAdd, TxAdd, ChSel and Length.
 ![blockDiagram](doc/image/pdu_header.png)
 #### PDU type
 Our project adopts `ADV_NONCONN_IND` in LE 1M packet implementaion.
 ![blockDiagram](doc/image/pdu_type.png)
+
 #### RFU
 Reserved for future use in Spec v.05.
 #### RxAdd, TxAdd
@@ -81,7 +82,7 @@ Reserved for future use in Spec v.05.
 Indicate the size of payload in bytes/octets. The length should be larger than 6 (reserved for advertising address) and less than 37. For example, if we have 6 for address, 3 for headers, 6 for payload, then PDU_length is 15. Similar to AA, the transmition start with LSB, so length 15 is 11110000 to keep the correct order.
 
 
-### Payload
+### PDU: Payload
 ![blockDiagram](doc/image/payload.png)
 
 There are three sections within the payload we used, which are advertising address and two advertising data (denoted as payload1 and payload2).
