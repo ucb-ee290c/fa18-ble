@@ -45,16 +45,13 @@ int main(void)
 {
     //input: pre_preamble bpreamble baccess_address pdu_crc_whitened
   uint64_t trigger = 1;
-  uint64_t data_pre_preamble = 000111U;
   uint64_t data_preamble = 0x55U;//2,8
   uint64_t data_AA = 0X6B7D9171U;//8,32
-  //01101011011111011001000101110001
-  //uint64_t data_pdu_crc_whiten = 1111 0001 1011 1011 1000 1001 1000 0100 1111 0000 1010 1011 0010 0110 0000 1101 1110 1110 0000110000101000011100100111100110100010100000111100101110100000110001001110110011101011
   uint64_t data_pduH = 0xF1BBU;//4,16
   uint64_t data_pduAA = 0x8984F0AB260DU;//12,48
-  uint64_t data_pduData1 = 0xEE0C287279U;//10,40
+  uint64_t data_pduData1 = 0xEE0C28B279U;//10,40
   uint64_t data_pduData2 = 0xA283CBA0U;//8,32
-  uint64_t data_crc = 0xC4ECEBU;//6,24
+  uint64_t data_crc = 0x748AADU;//6,24
 
   uint64_t data;
   uint64_t PDA_out;
@@ -106,26 +103,23 @@ int main(void)
 
   }
 
-
     while (1) {
         PDA_out = reg_read64(PACKET_DISASSEMBLER_READ);
         if (PDA_out %2 == 0) {
-            printf("unpack data: %#002x \n", PDA_out >> 14);
-        } else {
-            printf("unpack data: %#002x \n", PDA_out >> 14);
+            printf("unpack data: %#002x \n", PDA_out >> 11);
             if((PDA_out >> 1) % 2 == 1){
-                if((PDA_out >> 2) % 2 == 0){
-                    printf("CRC Valid\n");
-                }else{
-                    printf("CRC Invalid\n");
-                }
+                printf("CRC Invalid\n");
             }
-            if((PDA_out >> 3) % 2 == 1){
-                if((PDA_out >> 4) % 2 == 0){
-                    printf("AA Valid\n");
-                }else{
-                    printf("AA Invalid\n");
-                }
+            if((PDA_out >> 2) % 2 == 1){
+                printf("AA Invalid\n");
+            }
+        } else {
+            printf("unpack data: %#002x \n", PDA_out >> 11);
+            if((PDA_out >> 1) % 2 == 1){
+                printf("CRC Invalid\n");
+            }
+            if((PDA_out >> 2) % 2 == 1){
+                printf("AA Invalid\n");
             }
             printf("Finished disassembling \n");
             break;
