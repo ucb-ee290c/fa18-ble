@@ -39,6 +39,7 @@ Here is an exemplary output:
 ![right](image/pda_right.png)
 
 The unpacked data matches the input in PAChain.
+
 The C code will also produce error messages when either the CRC or the AA values are wrong. For example, if we deliberately alter the CRC input, the disassembler will find out and throw a flag:
 
 ![wrong](image/disassembler_wrong.png)
