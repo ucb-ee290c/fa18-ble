@@ -4,6 +4,8 @@ The cyclic redundency check is used for error detection and error correction acc
 According to Bluetooth Spec v.05, "for every Data Channel PDU, the shift register shall be preset with the CRC initialization value set for the Link Layer connection and communicated in the `CONNECT_IND` PDU. For the `AUX_SYNC_IND` PDU and its subordinate set, the shift register shall be preset with the CRCInit value set in the SyncInfo field (see Section 2.3.4.6) contained in the `AUX_ADV_IND` PDU that describes the periodic advertising. For all other Advertising Channel PDUs, the shift register shall be preset with 0x555555." The last case applies to this projct. The diagram below illustrates how the LFSR is initialized.
 
 ![blockDiagram](image/lfsr_crc.png) 
+
+When initializing, position 0 of the LFSR is set as the least significant bit, and position 23 of the LFSR is the most significant bit. One thing to note is that the CRC is transmitted most significant bit first (from position 23 to position 0), which is different from other parts of the BLE packet.
  
  ## Input and Output Ports
  ```
