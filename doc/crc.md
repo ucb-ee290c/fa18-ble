@@ -26,4 +26,4 @@ A CRC module has three inputs and one output. `init` is a 1-bit input sent by th
 
 A simple scala test is provided for the crc module. To perform the unit test, type `sbt` in the root directory. After that, type `testOnly CRC_test.Serial_CRCTester` in the sbt terminal.
 
-CRC also plays an important role in the top level test, and the CRC value of BLE packets can be compared to the software golden model after [PAChain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pa_chain.md) is completed. 
+CRC also plays an important role in the top level test, and the CRC value of BLE packets can be compared to the software golden model after the top level test of [PAChain](https://github.com/ucberkeley-ee290c/fa18-ble/tree/master/doc/pa_chain.md) is completed. 
