@@ -1,5 +1,6 @@
 ﻿# Whitening
-A whitening module is used to prevent a long sequence of zeros or ones. It is similar to a CRC despite some subtle difference.
+A whitening module is used to prevent a long sequence of zeros or ones. It is performed similar to a CRC despite some subtle difference. According to the Bluetooth spec, whitening is applied to PDU and CRC fields and is performed after CRC in the packet assembler, and before CRC in the packet disassembler.
+
  
  ## Input and Output Ports
  ```
