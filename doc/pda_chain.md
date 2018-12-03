@@ -17,7 +17,7 @@ PROJECT ?= PacketDisAssembler
 ```
 * Then go to folder `fa18-ble/tests` and change line 6 of ``Makefile`` to 
 ```
-PROGRAMS = pds
+PROGRAMS = pda
 ```
 * Then type `make` in the tests folder to generate the .riscv file corresponding to the C code.
 
