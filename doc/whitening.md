@@ -8,7 +8,7 @@ Whitening and de-whitening is achieved using a 7-bit Linear Feedback Shift Regis
 
 ![whitening_lfsr](image/whitening_lfsr.png)
 
-There is a subtle but important difference in the LFSR of whitening/dewhitening and CRC: for whitening, the input bit is not fed into the register. Instead, it is XORed with the bit at position 6 at every clock cycle to generate the output bit. The rest is similar: at every clock cycle
+There is a subtle but important difference in the LFSR of whitening/dewhitening and CRC: for whitening, the input bit is not fed into the register. Instead, it is XORed with the bit at position 6 at every clock cycle to generate the output bit. The rest is similar: at every clock cycle the LFSR shifts the existing bits to the right and perform XOR operation on the tap bits.
 
  ## Input and Output Ports
  ```
