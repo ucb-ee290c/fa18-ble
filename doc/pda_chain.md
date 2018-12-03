@@ -37,5 +37,5 @@ This test takes in the output of the [PAChain](https://github.com/ucberkeley-ee2
 Here is an exemplary output:
 
 The C code will also produce error messages when either the CRC or the AA values are wrong. For example, if we deliberately alter the CRC input, the disassembler will find out and throw a flag:
-[wrong](image/disassembler_wrong.png)
+![wrong](image/disassembler_wrong.png)
 
