@@ -5,7 +5,9 @@ A whitening module is used to prevent long sequences of zeros or ones. It is per
 Whitening and de-whitening is achieved using a 7-bit Linear Feedback Shift Register (LFSR). The shift register is initialized in the following manner:
 * Position 0 is set to 1
 * Positions 1 to 6 is set to the channel index of the transmitting/receiving channel, with the most significant bit set to position 1 and the least significant bit set to position 6. In our case, the channel index is 0x25, so the shift register is initialized to 1100101.
- 
+
+![whitening_lfsr](image/whitening_lfsr.png)
+
  ## Input and Output Ports
  ```
  class Whitening extends Module {
