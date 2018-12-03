@@ -34,3 +34,7 @@ class PAOutputBundle extends Bundle {
 }
 ```
 Packet Assembler has two outputs. `data` is a 1-bit result. `done` is a 1-bit output that notifies the end of the packet.
+
+## Test
+
+A simple scala test is provided for the Packet Assembler module. To perform the unit test, type `sbt` in the root directory. After that, type `testOnly PacketAssembler.test.PacketAssemblerTester` in the sbt terminal.
